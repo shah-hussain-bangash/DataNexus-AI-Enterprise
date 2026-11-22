@@ -1,0 +1,17 @@
+name: Documentation checks
+on:
+  push:
+  pull_request:
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required repository files
+        run: |
+          test -s README.md
+          test -s SECURITY.md
+          test -s docs/INDEX.md
+          test -s docs/02-requirements/software-requirements-specification.md
+      - name: JSON schema syntax
+        run: python -m json.tool contracts/schemas/event-envelope.schema.json >/dev/null

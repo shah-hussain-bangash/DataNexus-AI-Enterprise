@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+.pytest_cache/
+node_modules/
+.next/
+dist/
+build/
+.terraform/
+*.tfstate
+*.tfstate.*
+.DS_Store
+*.log
+data/raw/
+data/curated/
+secrets/

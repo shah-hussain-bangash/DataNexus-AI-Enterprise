@@ -1,0 +1,16 @@
+flowchart TD
+  Sources[Approved data sources] --> Ingest[Connector service]
+  Ingest --> Kafka[Kafka events]
+  Kafka --> Stream[Streaming compute]
+  Stream --> Lake[Lakehouse storage]
+  Stream --> Alerts[Anomaly service]
+  Lake --> Query[Governed query API]
+  Alerts --> Agent[Agent workflow]
+  Query --> Agent
+  Agent --> Approval[Human approval & audit]
+  Query --> Web[Enterprise web portal]
+  Approval --> Web
+  IDP[Identity and policy] -. enforce .-> Query
+  IDP -. enforce .-> Agent
+  Telemetry[Observability] -. monitors .-> Kafka
+  Telemetry -. monitors .-> Agent

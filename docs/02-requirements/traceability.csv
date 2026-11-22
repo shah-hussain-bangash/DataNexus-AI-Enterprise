@@ -1,0 +1,14 @@
+requirement,design,verification,status
+FR-001,docs/04-data-architecture/data-platform.md,TEST-INGEST-001,planned
+FR-002,contracts/schemas/event-envelope.schema.json,TEST-SCHEMA-001,planned
+FR-003,architecture/adr/ADR-001-event-backbone.md,TEST-KAFKA-001,planned
+FR-004,docs/04-data-architecture/data-platform.md,TEST-STREAM-001,planned
+FR-005,architecture/adr/ADR-002-lakehouse.md,TEST-STORAGE-001,planned
+FR-006,docs/08-machine-learning/ml-lifecycle.md,TEST-ML-001,planned
+FR-007,docs/06-generative-ai/genai-architecture.md,TEST-RAG-001,planned
+FR-008,docs/10-security-governance/security-and-threat-model.md,TEST-AUTHZ-001,planned
+FR-009,docs/07-agentic-ai/agentic-architecture.md,TEST-APPROVAL-001,planned
+FR-010,docs/10-security-governance/security-and-threat-model.md,TEST-AUDIT-001,planned
+FR-011,docs/12-production-operations/operations-readiness.md,TEST-OBS-001,planned
+FR-012,docs/06-generative-ai/genai-architecture.md,TEST-I18N-001,planned
+FR-013,docs/12-production-operations/operations-readiness.md,TEST-DR-001,planned
