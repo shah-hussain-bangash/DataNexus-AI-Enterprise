@@ -1,0 +1,37 @@
+name: datanexus-phase2
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v26.3.1
+    command:
+      - redpanda
+      - start
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+      - --rpc-addr
+      - redpanda:33145
+      - --advertise-rpc-addr
+      - redpanda:33145
+      - --mode
+      - dev-container
+      - --smp
+      - "1"
+    ports:
+      - "127.0.0.1:19092:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+  consumer:
+    build: .
+    profiles: ["pipeline"]
+    command: ["python", "-m", "datanexus.cli", "consume", "--bootstrap", "redpanda:9092", "--db", "/app/data/dev/aviation.sqlite3"]
+    depends_on: [redpanda]
+    volumes:
+      - ./data/dev:/app/data/dev
+  producer:
+    build: .
+    profiles: ["pipeline"]
+    command: ["python", "-m", "datanexus.cli", "collect", "--mode", "fixture", "--bootstrap", "redpanda:9092"]
+    depends_on: [redpanda]
+volumes:
+  redpanda_data:
