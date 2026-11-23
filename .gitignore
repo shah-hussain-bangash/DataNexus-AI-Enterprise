@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+phase2f.env
 __pycache__/
 .pytest_cache/
 node_modules/
@@ -18,4 +19,5 @@ data/dev/
 data/lakehouse/
 data/spark/
 data/streaming/
+data/iceberg/
 secrets/

@@ -1,0 +1,79 @@
+name: datanexus-iceberg-s3
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${DATANEXUS_S3_ACCESS_KEY:?Set DATANEXUS_S3_ACCESS_KEY in phase2f.env}
+      MINIO_ROOT_PASSWORD: ${DATANEXUS_S3_SECRET_KEY:?Set DATANEXUS_S3_SECRET_KEY in phase2f.env}
+    ports:
+      - "127.0.0.1:19000:9000"
+      - "127.0.0.1:19001:9001"
+    volumes:
+      - phase2f_minio_data:/data
+
+  s3-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    environment:
+      DATANEXUS_S3_ACCESS_KEY: ${DATANEXUS_S3_ACCESS_KEY:?Set DATANEXUS_S3_ACCESS_KEY}
+      DATANEXUS_S3_SECRET_KEY: ${DATANEXUS_S3_SECRET_KEY:?Set DATANEXUS_S3_SECRET_KEY}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        until mc alias set local http://minio:9000 "$$DATANEXUS_S3_ACCESS_KEY" "$$DATANEXUS_S3_SECRET_KEY"; do
+          echo "Waiting for MinIO..."
+          sleep 2
+        done
+        mc mb --ignore-existing local/warehouse
+        mc ls local
+    restart: "no"
+
+  iceberg-rest:
+    image: apache/iceberg-rest-fixture:latest
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
+    environment:
+      AWS_ACCESS_KEY_ID: ${DATANEXUS_S3_ACCESS_KEY:?Set DATANEXUS_S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${DATANEXUS_S3_SECRET_KEY:?Set DATANEXUS_S3_SECRET_KEY}
+      AWS_REGION: us-east-1
+      CATALOG_WAREHOUSE: s3://warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://minio:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+
+  iceberg-s3:
+    image: apache/spark:3.5.5
+    user: "0:0"
+    entrypoint: ["/opt/spark/bin/spark-submit"]
+    depends_on:
+      - iceberg-rest
+    environment:
+      SPARK_LOCAL_IP: "127.0.0.1"
+      AWS_ACCESS_KEY_ID: ${DATANEXUS_S3_ACCESS_KEY:?Set DATANEXUS_S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${DATANEXUS_S3_SECRET_KEY:?Set DATANEXUS_S3_SECRET_KEY}
+      AWS_REGION: us-east-1
+    command:
+      - "--master"
+      - "local[2]"
+      - "--conf"
+      - "spark.ui.enabled=false"
+      - "--packages"
+      - "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.9.2,org.apache.iceberg:iceberg-aws-bundle:1.9.2"
+      - "/opt/project/pipelines/spark_iceberg_s3.py"
+      - "--bronze"
+      - "/opt/project/data/streaming/bronze_parquet"
+      - "--expected-unique"
+      - "2"
+    volumes:
+      - ./data/streaming:/opt/project/data/streaming:ro
+      - ./pipelines/spark_iceberg_s3.py:/opt/project/pipelines/spark_iceberg_s3.py:ro
+      - ./pipelines/spark_iceberg_medallion.py:/opt/project/pipelines/spark_iceberg_medallion.py:ro
+      - phase2f_ivy_cache:/root/.ivy2
+
+volumes:
+  phase2f_minio_data:
+  phase2f_ivy_cache:
