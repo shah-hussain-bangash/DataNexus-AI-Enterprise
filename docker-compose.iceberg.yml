@@ -1,0 +1,30 @@
+# Self-contained single-host Iceberg milestone, using the verified Spark image.
+# Requires the previously generated Phase 2D Bronze Parquet dataset.
+name: datanexus-iceberg-local
+services:
+  iceberg-local:
+    image: apache/spark:3.5.5
+    user: "0:0"
+    entrypoint: ["/opt/spark/bin/spark-submit"]
+    environment:
+      SPARK_LOCAL_IP: "127.0.0.1"
+    command:
+      - "--master"
+      - "local[2]"
+      - "--conf"
+      - "spark.ui.enabled=false"
+      - "--packages"
+      - "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.9.2"
+      - "/opt/project/pipelines/spark_iceberg_medallion.py"
+      - "--bronze"
+      - "/opt/project/data/streaming/bronze_parquet"
+      - "--warehouse"
+      - "file:/opt/project/data/iceberg/warehouse"
+      - "--expected-unique"
+      - "2"
+    volumes:
+      - ./data:/opt/project/data
+      - ./pipelines/spark_iceberg_medallion.py:/opt/project/pipelines/spark_iceberg_medallion.py:ro
+      - iceberg_ivy_cache:/root/.ivy2
+volumes:
+  iceberg_ivy_cache:
