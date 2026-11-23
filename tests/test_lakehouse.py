@@ -2,6 +2,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from datanexus.events import normalize_states
@@ -44,12 +45,13 @@ class LakehouseTests(unittest.TestCase):
         bad = dict(self.events[0])
         bad["event_id"] = "invalid-test-id"
         bad["payload"] = dict(bad["payload"], latitude=999.0)
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             db.execute(
                 "INSERT INTO events (event_id, source_time, tenant_id, icao24, latitude, longitude, raw_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (bad["event_id"], bad["source_event_time"], bad["tenant_id"], bad["payload"]["icao24"],
                  999.0, 55.2, json.dumps(bad)),
             )
+            db.commit()
         metrics = export_layers(self.db, self.target)
         self.assertEqual(metrics["bronze_records"], 3)
         self.assertEqual(metrics["silver_records"], 2)
