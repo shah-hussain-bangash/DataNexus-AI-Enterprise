@@ -14,4 +14,8 @@ build/
 *.log
 data/raw/
 data/curated/
+data/dev/
+data/lakehouse/
+data/spark/
+data/streaming/
 secrets/

@@ -1,0 +1,33 @@
+# Combine with docker-compose.yml so the streaming Spark job joins Redpanda's network.
+# docker compose -f docker-compose.yml -f docker-compose.streaming.yml run --rm spark-stream
+services:
+  spark-stream:
+    image: apache/spark:3.5.5
+    user: "0:0"
+    entrypoint: ["/opt/spark/bin/spark-submit"]
+    environment:
+      SPARK_LOCAL_IP: "127.0.0.1"
+    command:
+      - "--master"
+      - "local[2]"
+      - "--conf"
+      - "spark.ui.enabled=false"
+      - "--packages"
+      - "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5"
+      - "/opt/project/pipelines/spark_kafka_stream.py"
+      - "--bootstrap"
+      - "redpanda:9092"
+      - "--topic"
+      - "aviation.states.v1"
+      - "--output"
+      - "/opt/project/data/streaming/bronze_parquet"
+      - "--checkpoint"
+      - "/opt/project/data/streaming/checkpoints/aviation_bronze_v1"
+    depends_on:
+      - redpanda
+    volumes:
+      - ./data:/opt/project/data
+      - ./pipelines/spark_kafka_stream.py:/opt/project/pipelines/spark_kafka_stream.py:ro
+      - spark_ivy_cache:/root/.ivy2
+volumes:
+  spark_ivy_cache:
