@@ -10,6 +10,7 @@ import os
 import sqlite3
 import tempfile
 from collections import defaultdict
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def export_layers(db_path, output_dir):
     if not db_path.exists():
         raise FileNotFoundError(f"SQLite input not found: {db_path}")
     target = Path(output_dir)
-    with sqlite3.connect(db_path) as connection:
+    with closing(sqlite3.connect(db_path)) as connection:
         rows = connection.execute("SELECT raw_json FROM events ORDER BY event_id").fetchall()
 
     bronze, silver, quarantine = [], [], []
