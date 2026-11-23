@@ -1,0 +1,32 @@
+name: Phase 2C Spark smoke
+on:
+  push:
+    paths:
+      - "pipelines/spark_medallion.py"
+      - "tests/fixtures/spark-silver.jsonl"
+      - ".github/workflows/phase2c-spark-smoke.yml"
+  pull_request:
+jobs:
+  spark-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install pyspark==3.5.5
+      - name: Run Spark local batch over synthetic records
+        run: |
+          spark-submit --master 'local[2]' pipelines/spark_medallion.py \
+            --input tests/fixtures/spark-silver.jsonl \
+            --output /tmp/datanexus-spark-smoke --expected-events 2
+      - name: Inspect output paths
+        run: |
+          test -f /tmp/datanexus-spark-smoke/gold_parquet/_SUCCESS
+          test -f /tmp/datanexus-spark-smoke/silver_parquet/_SUCCESS
+          test -f /tmp/datanexus-spark-smoke/quarantine_parquet/_SUCCESS

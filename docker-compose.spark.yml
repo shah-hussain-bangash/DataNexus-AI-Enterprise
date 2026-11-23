@@ -1,0 +1,23 @@
+name: datanexus-spark-local
+services:
+  spark:
+    image: apache/spark:3.5.5
+    entrypoint: ["/opt/spark/bin/spark-submit"]
+    user: "0:0"
+    environment:
+      SPARK_LOCAL_IP: "127.0.0.1"
+    command:
+      - "--master"
+      - "local[2]"
+      - "--conf"
+      - "spark.ui.enabled=false"
+      - "/opt/project/pipelines/spark_medallion.py"
+      - "--input"
+      - "/opt/project/data/lakehouse/silver/aviation_states.jsonl"
+      - "--output"
+      - "/opt/project/data/spark"
+      - "--expected-events"
+      - "2"
+    volumes:
+      - ./data:/opt/project/data
+      - ./pipelines/spark_medallion.py:/opt/project/pipelines/spark_medallion.py:ro

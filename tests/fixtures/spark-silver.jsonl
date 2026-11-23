@@ -1,0 +1,2 @@
+{"event_id":"synthetic-1","tenant_id":"demo","icao24":"896a1b","event_time":"2025-12-31T23:59:58Z","event_date":"2025-12-31","latitude":25.1,"longitude":55.2,"on_ground":false,"velocity_mps":220.0,"source":"opensky"}
+{"event_id":"synthetic-2","tenant_id":"demo","icao24":"896a2c","event_time":"2025-12-31T23:59:57Z","event_date":"2025-12-31","latitude":25.2,"longitude":55.3,"on_ground":false,"velocity_mps":240.0,"source":"opensky"}
