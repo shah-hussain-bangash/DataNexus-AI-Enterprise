@@ -23,12 +23,12 @@ services:
       - /bin/sh
       - -ec
       - |
-        until mcli alias set local http://minio:9000 "$$DATANEXUS_S3_ACCESS_KEY" "$$DATANEXUS_S3_SECRET_KEY"; do
+        until mc alias set local http://minio:9000 "$$DATANEXUS_S3_ACCESS_KEY" "$$DATANEXUS_S3_SECRET_KEY"; do
           echo "Waiting for MinIO..."
           sleep 2
         done
-        mcli mb --ignore-existing local/warehouse
-        mcli ls local
+        mc mb --ignore-existing local/warehouse
+        mc ls local
     restart: "no"
 
   iceberg-rest:
