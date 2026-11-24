@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class PortalVisualRefreshTests(unittest.TestCase):
     def test_command_center_content_and_real_data_bindings(self):
         code = (ROOT / "apps/web/app/page.tsx").read_text(encoding="utf-8")
-        for term in ("Mission control for", "hero-radar-rings", "hero-satellite", "overview?.workspace?.tenant_id", "/api/portal/overview", "/api/portal/events", "signOut", "EventTable"):
+        for term in ("Reliable aviation data", "hero-radar-rings", "hero-satellite", "overview?.workspace?.tenant_id", "/api/portal/overview", "/api/portal/events", "signOut", "EventTable"):
             self.assertIn(term, code)
     def test_sign_in_form_remains_functional(self):
         code = (ROOT / "apps/web/app/sign-in/page.tsx").read_text(encoding="utf-8")
