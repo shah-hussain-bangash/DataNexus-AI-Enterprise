@@ -56,6 +56,14 @@ flowchart TD
 - [Roadmap](docs/01-strategy-and-business/roadmap.md)
 - [Architecture decisions](architecture/adr/ADR-001-event-backbone.md)
 
+## Production completion gate
+
+The [production completion contract](docs/12-production-operations/production-completion-contract.md)
+defines 16 mandatory evidence-based release controls. Run
+`python scripts/release_gate.py`; it **intentionally blocks release** until
+all controls have independent evidence and review. This is not currently a
+production-complete system.
+
 ## Engineering quality gates
 Requirements IDs map to API/event contracts, automated tests and evidence. Never label a design-only control as implemented. All workloads must have documented permissions, resource budgets, failure behavior and observable health.
 
