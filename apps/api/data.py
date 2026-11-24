@@ -5,6 +5,7 @@ When unavailable, APIs expose explicit unconfigured status rather than mock data
 """
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 
@@ -13,7 +14,7 @@ def read_events(path, limit=100, query=""):
     if not db_path.is_file():
         return {"configured": False, "events": [], "total": 0, "message": "SQLite event sink not found. Run the Phase 2A consumer to populate data/dev/aviation.sqlite3."}
     limit = max(1, min(int(limit), 500))
-    with sqlite3.connect(f"file:{db_path.resolve().as_posix()}?mode=ro", uri=True) as connection:
+    with closing(sqlite3.connect(f"file:{db_path.resolve().as_posix()}?mode=ro", uri=True)) as connection:
         connection.row_factory = sqlite3.Row
         search = "%" + query.strip()[:80].replace("%", r"\%").replace("_", r"\_") + "%"
         where = "WHERE (icao24 LIKE ? ESCAPE '\\' OR tenant_id LIKE ? ESCAPE '\\')" if query.strip() else ""
