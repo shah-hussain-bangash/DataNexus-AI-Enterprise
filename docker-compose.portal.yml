@@ -1,0 +1,25 @@
+name: datanexus-portal
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATANEXUS_SQLITE_PATH: /opt/project/data/dev/aviation.sqlite3
+    volumes:
+      - ./data/dev:/opt/project/data/dev:ro
+    expose:
+      - "8000"
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:13000:3000"
+    restart: unless-stopped

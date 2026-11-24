@@ -1,0 +1,22 @@
+name: Portal Contract Tests
+on:
+  push:
+    paths:
+      - 'apps/**'
+      - 'docker-compose.portal.yml'
+      - 'tests/test_portal_contract.py'
+      - '.github/workflows/portal-contract.yml'
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'docker-compose.portal.yml'
+      - 'tests/test_portal_contract.py'
+jobs:
+  portal-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
