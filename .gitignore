@@ -25,3 +25,4 @@ secrets/
 
 production-evidence/
 production-readiness-report.json
+portal-db.env
