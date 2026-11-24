@@ -9,7 +9,7 @@ class PortalVisualRefreshTests(unittest.TestCase):
             self.assertIn(term, code)
     def test_sign_in_form_remains_functional(self):
         code = (ROOT / "apps/web/app/sign-in/page.tsx").read_text(encoding="utf-8")
-        for term in ("signin-console", "/api/auth/login", "onSubmit={submit}", "type=\"password\"", "Enter the workspace"):
+        for term in ("signin-console", "/api/auth/login", "onSubmit={submit}", "type={visible ? \"text\" : \"password\"}", "Enter the workspace"):
             self.assertIn(term, code)
     def test_refresh_responsive_styles(self):
         css = (ROOT / "apps/web/app/globals.css").read_text(encoding="utf-8")
