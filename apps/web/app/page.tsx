@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, Cloud,
   Command, Database, Download, ExternalLink, Filter, Gauge, Layers3, LayoutDashboard,
   LockKeyhole, Menu, Plane, Radar, RefreshCw, Search, Server, Settings2, ShieldCheck,
-  Sparkles, Workflow, X,
+  Sparkles, Workflow, X, LogOut,
 } from "lucide-react";
 
 type EventRow = {
@@ -21,6 +21,7 @@ type Summary = {
 };
 type Overview = {
   events: Summary; environment: string;
+  workspace?: { username: string; role: string; tenant_id: string };
   systems: { name: string; key: string; status: string }[];
   limitations: string[];
 };
@@ -120,6 +121,7 @@ export default function Home() {
         fetch("/api/portal/overview", { cache: "no-store" }),
         fetch("/api/portal/events", { cache: "no-store" }),
       ]);
+      if (o.status === 401 || e.status === 401) { window.location.assign("/sign-in"); return; }
       if (!o.ok || !e.ok) throw new Error("The local API is unreachable. Check the backend service.");
       setOverview(await o.json()); setEvents(await e.json());
       setLastRefresh(new Date());
@@ -134,6 +136,7 @@ export default function Home() {
   }, [events, query, sortNew]);
   const summary = overview?.events;
   const setPage = (id: View) => { setView(id); setMobileOpen(false); setSelected(null); };
+  const signOut = async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.assign("/sign-in"); };
   return <div className="shell">
     {mobileOpen && <button className="mobile-backdrop" onClick={() => setMobileOpen(false)} aria-label="Close menu"/>}
     <aside className={"sidebar " + (mobileOpen ? "sidebar-open" : "")}>
@@ -145,13 +148,13 @@ export default function Home() {
         </button>)}</div>)}</div>
       <div className="sidebar-bottom">
         <div className="platform-note"><div className="platform-note-icon"><Gauge size={19}/></div><strong>Platform foundation</strong><p>Streaming, lakehouse and object storage are implemented. Observability integration is next.</p><button onClick={() => setPage("pipelines")}>Explore architecture <ArrowRight size={14}/></button></div>
-        <div className="profile"><div className="profile-avatar">DN</div><div><strong>Local Developer</strong><span>Unauthenticated prototype</span></div><span className="profile-ellipsis">•••</span></div>
+        <div className="profile"><div className="profile-avatar">DN</div><div><strong>Local Developer</strong><span>Authenticated local session</span></div><button className="profile-signout" title="Sign out" aria-label="Sign out" onClick={() => void signOut()}><LogOut size={17}/></button></div>
       </div>
     </aside>
     <main className="main">
       <header className="topbar">
         <div className="breadcrumb"><button className="mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={21}/></button><span>Workspace</span><ChevronRight size={15}/><strong>{pages[view].name}</strong></div>
-        <div className="top-actions"><span className="environment-badge"><span className="status-dot"/> LOCAL DEVELOPMENT</span><button className="top-icon" onClick={() => setPage("quality")} aria-label="Open data quality"><Bell size={19}/></button><button className="top-icon" onClick={() => setPage("settings")} aria-label="Open settings"><CircleHelp size={19}/></button><span className="top-avatar">DN</span></div>
+        <div className="top-actions"><span className="environment-badge"><span className="status-dot"/> LOCAL DEVELOPMENT</span><button className="top-icon" onClick={() => setPage("quality")} aria-label="Open data quality"><Bell size={19}/></button><button className="top-icon" onClick={() => setPage("settings")} aria-label="Open settings"><CircleHelp size={19}/></button><button className="top-avatar top-avatar-button" title="Sign out" aria-label="Sign out" onClick={() => void signOut()}>DN</button></div>
       </header>
       <div className="content">
         <div className="page-heading"><div><div className="eyebrow">{pages[view].eyebrow}</div><h1>{pages[view].name}<span className="heading-dot">.</span></h1><p>{pages[view].subtitle}</p></div><div className="heading-actions"><button className="button button-quiet" disabled={!events?.events?.length} onClick={() => downloadJson({ exported_at: new Date().toISOString(), data_source: "local_sqlite", events: list })}><Download size={16}/> Export events</button><button className="button button-primary" disabled={loading} onClick={() => void refresh()}><RefreshCw size={16} className={loading ? "spin" : ""}/> Refresh data</button></div></div>
@@ -169,7 +172,7 @@ export default function Home() {
         {view === "pipelines" && <><div className="warning info"><Activity size={18}/><span>Pipeline stages were tested separately in Phase 2. This view represents the architecture; it does not claim live service health.</span></div><div className="card pipeline-card"><div className="card-header"><div><h3>Data platform architecture</h3><p>Event processing to analytical storage</p></div><span className="tag-outline">DESIGN + LOCAL TESTS</span></div><div className="pipeline-flow">{[{title:"Event capture",sub:"OpenSky → Kafka",icon:Radar},{title:"Stream processing",sub:"Apache Spark",icon:Workflow},{title:"Lakehouse tables",sub:"Apache Iceberg",icon:Layers3},{title:"Object storage",sub:"S3-compatible",icon:Cloud}].map((step,i) => <div className="flow-wrap" key={step.title}><div className="pipeline-node"><div className="flow-icon"><step.icon size={23}/></div><strong>{step.title}</strong><span>{step.sub}</span><small>Telemetry pending</small></div>{i < 3 && <ArrowRight className="flow-arrow" size={24}/>}</div>)}</div></div><div className="dashboard-grid"><div className="card"><div className="card-header"><div><h3>Monitoring coverage</h3><p>Services awaiting runtime integration</p></div><Gauge size={19}/></div><div className="health-list">{(overview?.systems || []).map(s => <div className="health-row" key={s.key}><div className="health-icon health-0"><Server size={17}/></div><span>{s.name}</span><span className="status-neutral">Pending</span></div>)}</div></div><div className="card next-card"><div className="next-icon"><Boxes size={25}/></div><h3>Next engineering milestone</h3><p>Connect authenticated service health checks, lag, Spark job runs, Iceberg snapshot audit metrics, and storage capacity to versioned API contracts.</p><div className="next-list"><span><CheckCheck size={15}/> Reuse existing pipeline components</span><span><CheckCheck size={15}/> Add real telemetry adapters</span><span><CheckCheck size={15}/> Test failure and recovery</span></div></div></div></>}
         {view === "quality" && <><div className="metrics metrics-three"><MetricCard label="Sampled events" value={summary?.configured ? fmt(summary.sample_size) : "—"} change="At most 500" icon={Database} color="blue"/><MetricCard label="Duplicate IDs" value={summary?.configured ? fmt(summary.duplicate_ids_in_sample) : "—"} change="Sample only" icon={ShieldCheck} color="mint"/><MetricCard label="Located observations" value={summary?.configured ? fmt(summary.positions_in_sample) : "—"} change="Sample only" icon={Radar} color="violet"/></div><div className="card"><div className="card-header"><div><h3>Evidence-based data quality</h3><p>Defined scope and limitations for each check</p></div><ClipboardCheck size={19}/></div><div className="quality-check">{[{n:"Event identity uniqueness",d:"Count duplicate event identifiers across up to 500 recent SQLite events.",s:"Measured in sample"},{n:"Coordinate completeness",d:"Count records with both latitude and longitude present in the same sample.",s:"Measured in sample"},{n:"Iceberg snapshot integrity",d:"The separate Phase 2G Spark audit is not yet connected to this API.",s:"Not integrated"},{n:"Kafka delivery quality",d:"No broker lag or delivery telemetry endpoint is connected.",s:"Not integrated"}].map((c,i)=><div className="quality-row" key={c.n}><span className={"quality-symbol " + (i < 2 ? "quality-ok" : "quality-idle")}>{i < 2 ? <CheckCheck size={18}/> : <LockKeyhole size={18}/>}</span><div><strong>{c.n}</strong><p>{c.d}</p></div><span className={i < 2 ? "quality-tag" : "status-neutral"}>{c.s}</span></div>)}</div></div></>}
         {view === "intelligence" && <div className="coming-soon"><div className="coming-icon"><Sparkles size={36}/></div><span className="eyebrow">COMING IN NEXT DEVELOPMENT PHASE</span><h2>Operational AI, with evidence.</h2><p>Disruption forecasting, interpretable predictions, evidence-grounded retrieval and approval-controlled agents are planned. No simulated model accuracy or fabricated AI output is shown here.</p><div className="coming-steps"><span><Gauge size={17}/> Prediction models</span><span><Database size={17}/> Evidence-backed RAG</span><span><ShieldCheck size={17}/> Governed agents</span></div></div>}
-        {view === "settings" && <div className="dashboard-grid settings-grid"><div className="card"><div className="card-header"><div><h3>Environment information</h3><p>Current development configuration</p></div><Settings2 size={19}/></div><div className="settings-line"><span>Deployment tier</span><strong>Local development</strong></div><div className="settings-line"><span>API access</span><strong>Internal Next.js proxy</strong></div><div className="settings-line"><span>Data source</span><strong>SQLite event sink</strong></div><div className="settings-line"><span>Authentication</span><strong>Not implemented</strong></div><div className="settings-line"><span>Storage telemetry</span><strong>Not connected</strong></div></div><div className="card next-card"><div className="next-icon"><LockKeyhole size={25}/></div><h3>Security first</h3><p>This portal is a local developer prototype without sign-in. Do not publish it publicly or load sensitive data until authentication, authorization, tenant isolation and production controls are implemented and tested.</p></div></div>}
+        {view === "settings" && <div className="dashboard-grid settings-grid"><div className="card"><div className="card-header"><div><h3>Environment information</h3><p>Current development configuration</p></div><Settings2 size={19}/></div><div className="settings-line"><span>Deployment tier</span><strong>Local development</strong></div><div className="settings-line"><span>API access</span><strong>Internal Next.js proxy</strong></div><div className="settings-line"><span>Data source</span><strong>SQLite event sink</strong></div><div className="settings-line"><span>Authentication</span><strong>Local signed sessions (not SSO)</strong></div><div className="settings-line"><span>Storage telemetry</span><strong>Not connected</strong></div></div><div className="card next-card"><div className="next-icon"><LockKeyhole size={25}/></div><h3>Security first</h3><p>This portal uses a single local administrator with signed sessions and tenant-filtered SQLite queries. It is not enterprise SSO or multi-user RBAC. Do not publish it until MFA, centralized identity and production security controls are validated.</p></div></div>}
         <footer className="footer"><span>© DataNexus AI Enterprise • Engineering preview</span><span>LOCAL DEVELOPMENT <span className="footer-sep">/</span> PHASE 3A.1</span></footer>
       </div>
     </main>

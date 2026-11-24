@@ -4,11 +4,11 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    env_file:
+      - ./portal.env
     environment:
       DATANEXUS_SQLITE_PATH: /opt/project/data/dev/aviation.sqlite3
     volumes:
-      # SQLite WAL readers may need to create/open -shm in this directory.
-      # Local development only; the application connection is read-only.
       - ./data/dev:/opt/project/data/dev
     expose:
       - "8000"

@@ -1,41 +1,42 @@
-"""DataNexus portal read-only operational API (Phase 3A.1).
-
-Local prototype only: no user sessions, public deployment, or production RBAC.
-"""
+"""Local signed-session API: not production SSO or RBAC."""
 import os
-
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi import Depends, FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
+from auth import authenticate, require_user, TTL_SECONDS
 from data import read_events, summarize_events
-
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
-app = FastAPI(title="DataNexus Portal API", version="0.1.0")
-# Browser requests are proxied by the Next.js server. No permissive wildcard CORS.
-allowed = os.getenv("DATANEXUS_CORS_ORIGIN", "")
-if allowed:
-    app.add_middleware(CORSMiddleware, allow_origins=[allowed], allow_methods=["GET"], allow_headers=["Content-Type"])
-
-
+app = FastAPI(title="DataNexus Portal API", version="0.2.0")
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=1, max_length=1024)
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "datanexus-portal-api", "version": "0.1.0"}
-
-
-@app.get("/api/v1/events")
-def events(limit: int = Query(100, ge=1, le=500), q: str = Query("", max_length=80)):
+    return {"status": "ok", "service": "datanexus-portal-api", "version": "0.2.0"}
+@app.post("/auth/login")
+def login(payload: LoginRequest):
     try:
-        return read_events(DB_PATH, limit=limit, query=q)
+        token = authenticate(payload.username, payload.password)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="Local sign-in not configured") from exc
+    if not token:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"access_token": token, "token_type": "bearer", "expires_in": TTL_SECONDS}
+@app.get("/auth/me")
+def me(user: dict = Depends(require_user)):
+    return user
+@app.get("/api/v1/events")
+def events(limit: int = Query(100, ge=1, le=500), q: str = Query("", max_length=80), user: dict = Depends(require_user)):
+    try:
+        return read_events(DB_PATH, limit=limit, query=q, tenant_id=user["tenant_id"])
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail="Local event database unavailable") from exc
-
-
 @app.get("/api/v1/overview")
-def overview():
+def overview(user: dict = Depends(require_user)):
     try:
         return {
-            "events": summarize_events(read_events(DB_PATH, limit=500)),
+            "events": summarize_events(read_events(DB_PATH, limit=500, tenant_id=user["tenant_id"])),
             "environment": "local-development",
+            "workspace": {"role": user["role"], "tenant_id": user["tenant_id"], "username": user["username"]},
             "systems": [
                 {"name": "Kafka event backbone", "key": "kafka", "status": "not_instrumented"},
                 {"name": "Spark processing", "key": "spark", "status": "not_instrumented"},
@@ -43,21 +44,20 @@ def overview():
                 {"name": "S3-compatible object storage", "key": "s3", "status": "not_instrumented"},
             ],
             "limitations": [
-                "SQLite event counts do not indicate streaming or object-store health.",
-                "Infrastructure telemetry, authentication and audit persistence are future phases.",
+                "SQLite counts do not indicate streaming or object-store health.",
+                "Local single-user sessions are not enterprise SSO or multiuser RBAC.",
+                "Infrastructure telemetry and persistent security audit trails are future phases.",
             ],
         }
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail="Local event database unavailable") from exc
-
-
 @app.get("/api/v1/quality")
-def quality():
+def quality(user: dict = Depends(require_user)):
     try:
-        return {"events": summarize_events(read_events(DB_PATH, limit=500)),
+        return {"events": summarize_events(read_events(DB_PATH, limit=500, tenant_id=user["tenant_id"])),
                 "checks": [
-                    {"name": "Primary-key uniqueness in sampled events", "status": "sample_only"},
-                    {"name": "Event coordinate availability in sampled events", "status": "sample_only"},
+                    {"name": "Primary-key uniqueness in sampled tenant events", "status": "sample_only"},
+                    {"name": "Coordinate availability in sampled tenant events", "status": "sample_only"},
                     {"name": "Iceberg snapshot audit", "status": "not_connected"},
                 ]}
     except (OSError, ValueError) as exc:

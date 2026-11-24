@@ -43,6 +43,27 @@ class PortalContractTests(unittest.TestCase):
             self.assertEqual(self.data.summarize_events(result)["aircraft_in_sample"], 1)
             self.assertEqual(self.data.read_events(db, query="nomatch")["total"], 0)
 
+    def test_tenant_scoped_aviation_events(self):
+        with tempfile.TemporaryDirectory() as path:
+            db = Path(path) / "aviation.sqlite3"
+            with closing(sqlite3.connect(db)) as conn:
+                conn.execute("""CREATE TABLE events (
+                    event_id TEXT PRIMARY KEY, source_time TEXT NOT NULL,
+                    tenant_id TEXT NOT NULL, icao24 TEXT NOT NULL,
+                    latitude REAL, longitude REAL, raw_json TEXT NOT NULL
+                )""")
+                for eid, tenant in (("first", "demo"), ("second", "other")):
+                    conn.execute("INSERT INTO events VALUES (?,?,?,?,?,?,?)", (
+                        eid, "2025-12-31T12:00:00Z", tenant, "abc123", 25.1, 55.1,
+                        '{"source":"fixture","payload":{}}'
+                    ))
+                conn.commit()
+            result = self.data.read_events(db, tenant_id="demo")
+            self.assertEqual(result["total"], 1)
+            self.assertEqual(result["events"][0]["tenant_id"], "demo")
+            self.assertEqual(self.data.read_events(db, tenant_id="other")["total"], 1)
+            self.assertEqual(self.data.read_events(db, tenant_id="missing")["total"], 0)
+
     def test_compose_is_localhost_only(self):
         text = (ROOT / "docker-compose.portal.yml").read_text(encoding="utf-8")
         self.assertIn("127.0.0.1:13000:3000", text)

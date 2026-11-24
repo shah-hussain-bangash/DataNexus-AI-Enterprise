@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 phase2f.env
+portal.env
 __pycache__/
 .pytest_cache/
 node_modules/
