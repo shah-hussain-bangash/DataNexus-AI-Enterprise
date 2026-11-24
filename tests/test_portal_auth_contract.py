@@ -27,6 +27,14 @@ class AuthPortalContractTests(unittest.TestCase):
         self.assertIn("Authorization:", web)
         self.assertIn("datanexus_session", web)
 
+    def test_origin_matches_public_browser_address(self):
+        compose = (ROOT / "docker-compose.portal.yml").read_text(encoding="utf-8")
+        self.assertIn("DATANEXUS_PUBLIC_ORIGIN: http://127.0.0.1:13000", compose)
+        for route in ("login", "logout"):
+            code = (ROOT / f"apps/web/app/api/auth/{route}/route.ts").read_text(encoding="utf-8")
+            self.assertIn("origin !== process.env.DATANEXUS_PUBLIC_ORIGIN", code)
+            self.assertIn("status: 403", code)
+
     def test_no_committed_default_credential(self):
         ignored = (ROOT / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("portal.env", ignored)

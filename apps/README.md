@@ -30,7 +30,7 @@ docker compose -f docker-compose.portal.yml up -d --build
 docker compose -f docker-compose.portal.yml ps
 ```
 
-Open **http://127.0.0.1:13000/sign-in** in your browser, using the credentials you set locally. The password is not printed or committed. If portal.env exists already, the setup script refuses to overwrite it.
+The login/logout CSRF origin check uses the explicit `DATANEXUS_PUBLIC_ORIGIN` set in Docker Compose, not Next.js internal Docker port 3000. This local configuration only permits `http://127.0.0.1:13000`. Never disable origin validation to fix a 403.\n\nOpen **http://127.0.0.1:13000/sign-in** in your browser, using the credentials you set locally. The password is not printed or committed. If portal.env exists already, the setup script refuses to overwrite it.
 
 If you have previously run the local event consumer and stored events in
 `data/dev/aviation.sqlite3`, the overview shows real stored event counts

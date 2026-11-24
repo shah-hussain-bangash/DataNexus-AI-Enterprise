@@ -19,6 +19,7 @@ services:
       dockerfile: apps/web/Dockerfile
     environment:
       API_INTERNAL_URL: http://api:8000
+      DATANEXUS_PUBLIC_ORIGIN: http://127.0.0.1:13000
       NEXT_TELEMETRY_DISABLED: "1"
     depends_on:
       - api

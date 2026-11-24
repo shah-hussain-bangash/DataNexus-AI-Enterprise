@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== request.nextUrl.origin) {
+  if (origin && origin !== process.env.DATANEXUS_PUBLIC_ORIGIN) {
     return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   }
   let body: unknown;
