@@ -116,3 +116,28 @@ body{background:#05182c;color:#e7f4ff}
 @media(max-width:1170px){.aviation-feature-strip{grid-template-columns:1fr 1fr}.aviation-feature:last-child{grid-column:1/-1}}
 @media(max-width:900px){.aviation-feature-strip{grid-template-columns:1fr}.aviation-feature:last-child{grid-column:auto}.hero{background-position:60% center}.content{padding:23px 18px}}
 @media(max-width:590px){.hero{min-height:310px}.hero-content{padding:24px 21px}.hero h2{font-size:29px}.hero-visual{display:none}.aviation-feature{min-height:135px}}
+
+
+/* Reference-faithful aviation portal — imagery, hierarchy and operational clarity */
+.sidebar{background:linear-gradient(180deg,#051527,#072b45);width:256px}.nav-heading{color:#f0c77d}.nav-item.active{background:linear-gradient(100deg,#026c85,#0b455f);box-shadow:inset 0 0 0 1px #16d5d4,0 0 16px #01c8cb25}
+.main{background:linear-gradient(135deg,#071c32,#031829)}.topbar{background:#061a31;border-color:#236484}
+.hero{height:300px;background-image:linear-gradient(90deg,#07172df7,#092b48c2 50%,#0c334a38 100%),url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_16.08.2009_05-14-19.jpg?width=1600");background-position:center,center 53%;background-size:cover;border-color:#20718b}
+.hero-content{padding:39px 39px;max-width:700px}.hero h2{font-size:clamp(35px,3.2vw,50px);line-height:1.08}.hero h2 em{background:linear-gradient(95deg,#eaba70,#ffe3a9);background-clip:text;-webkit-background-clip:text;color:transparent}.hero-visual{opacity:.13}
+.hero-link{background:linear-gradient(95deg,#08bdbb,#077e94);border:1px solid #1be4e0}.hero-secondary{background:#061d37d9}
+.metric-card{background:linear-gradient(138deg,#0a3c57,#071f38);border:1px solid #31728b;min-height:148px}.metric-body strong{font-size:clamp(25px,2.5vw,36px);color:#fff}
+.card{border-color:#27677f;background:linear-gradient(145deg,#0a3550,#061d33)}.section-head h3{color:#fff}
+.datanexus-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:17px 0 20px}
+.datanexus-gallery-panel{position:relative;isolation:isolate;display:flex;align-items:flex-start;justify-content:flex-end;flex-direction:column;min-height:208px;padding:20px;text-align:left;border:1px solid #347e94;border-radius:14px;background-size:cover;background-position:center;color:white;box-shadow:0 12px 29px #00142583;overflow:hidden}
+.datanexus-gallery-panel:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#03182bf8 0%,#092a43d7 51%,#0a385018 100%);z-index:-1}
+.gallery-aviation{background-image:url("https://commons.wikimedia.org/wiki/Special:FilePath/A2613-Dubai_Airport-Emirates2.jpg?width=950")}
+.gallery-ai{background-image:url("https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=950&q=80")}
+.gallery-streaming{background-image:url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=950")}
+.datanexus-gallery-panel>span{display:flex;gap:8px;align-items:center;font-size:9px;font-weight:800;letter-spacing:1.2px;color:#8af4ee;margin-bottom:8px}.datanexus-gallery-panel strong{font-size:20px;letter-spacing:-.6px}.datanexus-gallery-panel small{font-size:11px;color:#bfe1ea;margin-top:6px;max-width:240px}.datanexus-gallery-panel>svg{position:absolute;bottom:23px;right:20px;color:#f6ce80}
+.datanexus-gallery-panel:hover{border-color:#75f0e8;transform:translateY(-2px);transition:transform .2s,border-color .2s}
+.datanexus-pipeline-ribbon{display:flex;align-items:center;gap:17px;padding:17px;border:1px solid #2b7892;border-radius:14px;background:linear-gradient(90deg,#0a3558d9,#061c32f5),url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=900") left center/cover;margin:18px 0}
+.ribbon-heading{flex:0 0 205px;display:flex;align-items:center;gap:10px;color:#85f0e8}.ribbon-heading strong{display:block;color:#fff;font-size:13px}.ribbon-heading small{display:block;color:#9bbdd0;font-size:10px;margin-top:5px}
+.ribbon-stages{flex:1;display:flex;gap:7px;min-width:0}.ribbon-stage{flex:1;display:flex;flex-direction:column;gap:5px;border:1px solid #307b94;border-radius:9px;padding:10px;background:#0a3855df;min-width:0}.ribbon-stage span{color:#e5bf7f;font-size:9px}.ribbon-stage strong{color:#e8f7ff;font-size:11px}.ribbon-stage small{color:#adcbd8;font-size:9px}
+.ribbon-state{color:#e8c47d;font-size:10px;font-weight:800;white-space:nowrap}
+@media(max-width:1350px){.datanexus-pipeline-ribbon{flex-wrap:wrap}.ribbon-heading{flex-basis:100%}}
+@media(max-width:1000px){.datanexus-gallery{grid-template-columns:1fr 1fr}.datanexus-gallery-panel:last-child{grid-column:1/-1}.ribbon-stages{flex-wrap:wrap}.ribbon-stage{flex-basis:28%}}
+@media(max-width:700px){.datanexus-gallery{grid-template-columns:1fr}.datanexus-gallery-panel:last-child{grid-column:auto}.datanexus-pipeline-ribbon{align-items:flex-start}.ribbon-stages{flex-basis:100%}.hero h2{font-size:32px}}

@@ -25,7 +25,7 @@ export default function SignIn() {
     <section className="signin-art" aria-label="DataNexus aviation intelligence platform overview">
       <div className="signin-photo-backdrop" aria-hidden="true"/>
       <div className="signin-brand"><span className="signin-mark"><Plane size={24}/></span><div>Data<span>Nexus</span><sup>AI</sup><small>AVIATION INTELLIGENCE PLATFORM</small></div></div>
-      <div className="signin-art-body"><div className="signin-label"><span className="signin-pulse"/> AVIATION INTELLIGENCE PLATFORM</div><h1>Every signal.<br/><em>One intelligent<br/>command center.</em></h1><p>Unify aviation operations, reliable streaming data, and responsible AI in one intelligent workspace.</p>
+      <div className="signin-art-body"><div className="signin-label"><span className="signin-pulse"/> AVIATION INTELLIGENCE PLATFORM</div><h1>Every signal.<br/><em>One intelligent<br/>command center.</em></h1><p>An aviation intelligence workspace connecting flight operations, high-quality data and responsible enterprise AI.</p>
         <div className="signin-infra"><span><Activity size={17}/> EVENT STREAMS</span><span><Database size={17}/> DATA LAKEHOUSE</span><span><Plane size={17}/> AVIATION OPS</span></div>
         <div className="signin-photo-gallery" aria-label="Aviation project imagery">
           <div className="signin-photo-tile signin-photo-aircraft"><span className="signin-photo-kicker">01 / FLEET INTELLIGENCE</span><strong>Aircraft operations</strong><span>Monitoring-ready aviation data foundation</span></div>

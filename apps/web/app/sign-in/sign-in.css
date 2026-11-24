@@ -132,3 +132,15 @@
 @media(max-width:1100px){.signin-shell{grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr)}.signin-art{padding:30px}.signin-photo-gallery{grid-template-columns:1fr}.signin-photo-tile:last-child{display:none}.signin-art-body h1{font-size:42px}}
 @media(max-width:880px){.signin-shell{grid-template-columns:1fr}.signin-art{min-height:350px;padding:26px}.signin-art-body{margin:38px 0 16px}.signin-art-body h1{font-size:38px}.signin-photo-gallery{display:none}.signin-form-side{min-height:570px;padding:25px 22px}.signin-card{padding:26px 2px}.signin-photo-backdrop{background-position:50% 61%}.signin-art-footer{margin-top:18px}}
 @media(max-width:480px){.signin-art{min-height:345px}.signin-art-body h1{font-size:31px}.signin-art-body p{font-size:12px}.signin-infra{display:none}.signin-brand{font-size:18px}.signin-card h2{font-size:26px}}
+
+
+/* Approved split sign-in with photographic aircraft hero */
+.signin-shell{grid-template-columns:minmax(0,1.58fr) minmax(380px,.9fr)}
+.signin-art{padding:34px clamp(30px,5vw,88px);min-height:100vh}
+.signin-photo-backdrop{background-image:linear-gradient(180deg,#061b30fb 0%,#08223be8 31%,#062e48a4 58%,#0b2e4657 81%,#06192c80 100%),url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_16.08.2009_05-14-19.jpg?width=1800");background-position:center,center 66%;background-size:cover}
+.signin-art-body{max-width:715px;margin:25px 0 18px}.signin-art-body h1{font-size:clamp(41px,4.5vw,71px);line-height:1.12;letter-spacing:-2.5px}.signin-art-body h1 em{background:linear-gradient(95deg,#6df1e9,#a4daff);background-clip:text;-webkit-background-clip:text;color:transparent}.signin-art-body p{max-width:570px;color:#e7f7ff;font-size:14px;line-height:1.75}
+.signin-infra{margin-top:24px}.signin-infra span{background:#082943a6;border-color:#70d5e6a1}.signin-photo-gallery{display:none}
+.signin-form-side{background:linear-gradient(150deg,#f5faff,#e6f3fb);padding:27px clamp(25px,3vw,50px)}.signin-card{max-width:450px}.signin-secure{margin:0 auto 25px}.signin-card h2{font-size:clamp(27px,2.5vw,35px)}.signin-card input{background:#f8fcff;border-color:#acc3d7}
+.signin-submit{background:linear-gradient(100deg,#02c6bb,#007e91)}.signin-submit:hover:not(:disabled){background:linear-gradient(100deg,#05aba9,#006b80)}.signin-notice{background:#eef9fc}
+@media(max-width:900px){.signin-shell{grid-template-columns:1fr}.signin-art{min-height:375px;padding:27px}.signin-art-body h1{font-size:39px}.signin-photo-backdrop{background-position:center 62%}.signin-form-side{min-height:570px;padding:26px 22px}}
+@media(max-width:480px){.signin-art{min-height:335px}.signin-art-body h1{font-size:32px}}

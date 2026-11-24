@@ -34,6 +34,16 @@ class PortalVisualRefreshTests(unittest.TestCase):
         self.assertIn(".aviation-feature-strip", css)
         self.assertIn(".signin-shell", auth_css)
 
+    def test_reference_design_sections_and_live_data_bindings(self):
+        page = (ROOT / "apps/web/app/page.tsx").read_text(encoding="utf-8")
+        css = (ROOT / "apps/web/app/globals.css").read_text(encoding="utf-8")
+        signcss = (ROOT / "apps/web/app/sign-in/sign-in.css").read_text(encoding="utf-8")
+        for term in ("datanexus-gallery", "datanexus-pipeline-ribbon", "summary.total_events", "Not monitored", "Not operational"):
+            self.assertIn(term, page)
+        self.assertIn(".datanexus-gallery-panel", css)
+        self.assertIn(".signin-photo-backdrop", signcss)
+        self.assertIn("Dubai_Airport_16.08.2009_05-14-19.jpg", signcss)
+
     def test_refresh_responsive_styles(self):
         css = (ROOT / "apps/web/app/globals.css").read_text(encoding="utf-8")
         sign = (ROOT / "apps/web/app/sign-in/sign-in.css").read_text(encoding="utf-8")
