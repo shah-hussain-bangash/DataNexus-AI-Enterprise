@@ -1,6 +1,7 @@
 """Dependency-free checks of the new local portal structure and data API."""
 import importlib.util
 import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,7 +27,7 @@ class PortalContractTests(unittest.TestCase):
     def test_read_only_real_sqlite_events(self):
         with tempfile.TemporaryDirectory() as path:
             db = Path(path) / "aviation.sqlite3"
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn:
                 conn.execute("""CREATE TABLE events (
                     event_id TEXT PRIMARY KEY, source_time TEXT NOT NULL, tenant_id TEXT NOT NULL,
                     icao24 TEXT NOT NULL, latitude REAL, longitude REAL, raw_json TEXT NOT NULL
