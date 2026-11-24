@@ -16,8 +16,27 @@ class AuthPortalContractTests(unittest.TestCase):
         api = (ROOT / "apps/api/main.py").read_text(encoding="utf-8")
         for name in ("events", "overview", "quality"):
             self.assertIn('def ' + name + '(', api)
-        self.assertGreaterEqual(api.count("Depends(require_user)"), 4)
-        self.assertIn('tenant_id=user["tenant_id"]', api)
+        # P0.3 protects each route via require_permission(), which itself
+        # depends on require_user(). Never rely on counting old route syntax.
+        permissions = {
+            "events": "aviation:read",
+            "overview": "overview:read",
+            "quality": "quality:read",
+            "audit_events": "audit:read",
+        }
+        tree = ast.parse(api)
+        for route, permission in permissions.items():
+            function = next(
+                node for node in tree.body
+                if isinstance(node, ast.FunctionDef) and node.name == route
+            )
+            source = ast.get_source_segment(api, function)
+            self.assertIn(f'Depends(require_permission("{permission}"))', source)
+        policy = (ROOT / "apps/api/authorization.py").read_text(encoding="utf-8")
+        self.assertIn("Depends(require_user)", policy)
+        self.assertIn("if not permitted(user, permission)", policy)
+        self.assertIn("tenant_id=require_tenant(user", api)
+        self.assertIn("requested_tenant=tenant_id", api)
 
     def test_ui_has_sign_in_and_logout_routes(self):
         self.assertTrue((ROOT / "apps/web/app/sign-in/page.tsx").exists())
