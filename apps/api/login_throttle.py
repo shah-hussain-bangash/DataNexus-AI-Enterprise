@@ -21,10 +21,18 @@ class LoginThrottle:
         return username.strip().casefold()[:100]
 
     def _prune(self, now):
-        expired = [key for key, values in self._failures.items()
-                   if not values or values[-1] <= now - WINDOW_SECONDS]
-        for key in expired:
-            del self._failures[key]
+        """Discard each expired failure, including within active identities.
+
+        A rolling window must not count failures older than WINDOW_SECONDS
+        simply because a newer failure kept the identity entry alive.
+        """
+        cutoff = now - WINDOW_SECONDS
+        for key, values in list(self._failures.items()):
+            recent = [timestamp for timestamp in values if timestamp > cutoff]
+            if recent:
+                self._failures[key] = recent
+            else:
+                del self._failures[key]
 
     def retry_after(self, username, now=None):
         now = time.monotonic() if now is None else now

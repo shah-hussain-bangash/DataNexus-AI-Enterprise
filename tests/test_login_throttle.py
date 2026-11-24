@@ -24,6 +24,16 @@ class LoginThrottleTests(unittest.TestCase):
             self.limiter.failure("admin", now=float(point))
         self.assertEqual(self.limiter.retry_after("admin", now=301.0), 0)
 
+    def test_rolling_window_discards_only_expired_failures(self):
+        for point in (0.0, 1.0, 2.0, 3.0, 4.0):
+            self.limiter.failure("admin", now=point)
+        self.assertGreater(self.limiter.retry_after("admin", now=299.0), 0)
+        self.assertEqual(self.limiter.retry_after("admin", now=300.0), 0)
+        self.assertEqual(len(self.limiter._failures["admin"]), 4)
+        self.assertTrue(self.limiter.failure("admin", now=300.0))
+        self.assertGreater(self.limiter.retry_after("admin", now=300.0), 0)
+        self.assertEqual(self.limiter.retry_after("admin", now=301.0), 0)
+
     def test_success_resets_only_that_identity(self):
         for point in range(5):
             self.limiter.failure("admin", now=float(point))
