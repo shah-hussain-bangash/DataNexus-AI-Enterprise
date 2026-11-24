@@ -36,6 +36,7 @@ class PortalContractTests(unittest.TestCase):
                     "event-1", "2025-12-31T12:00:00Z", "demo", "abc123", 25.1, 55.1,
                     '{"source":"opensky.states.all","payload":{"callsign":"TEST123","velocity_mps":185}}'
                 ))
+                conn.commit()
             result = self.data.read_events(db)
             self.assertEqual(result["total"], 1)
             self.assertEqual(result["events"][0]["callsign"], "TEST123")
