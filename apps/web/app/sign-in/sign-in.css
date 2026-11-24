@@ -48,3 +48,24 @@
 .signin-help{color:#9dabba;font-size:10px;text-align:center;line-height:1.9}
 .signin-help code{color:#627db5}
 @media(max-width:880px){.signin-shell{grid-template-columns:1fr}.signin-art{min-height:300px;padding:28px}.signin-art-body{margin:35px 0 20px}.signin-art-body h1{font-size:32px;letter-spacing:-1.4px;margin:15px 0}.signin-art-body p,.signin-infra,.signin-art-footer{display:none}.signin-form-side{min-height:580px;padding:28px 22px}.signin-card{max-width:440px}.signin-orbit{opacity:.45}}
+
+/* Phase 3A.3 — refined sign-in */
+.signin-shell{grid-template-columns:minmax(470px,1.05fr) minmax(430px,.95fr);background:#f5f8fc}
+.signin-art{background:radial-gradient(circle at 75% 45%,#15507a,transparent 50%),linear-gradient(130deg,#061528,#0a2d4c 66%,#123d63);padding:45px clamp(35px,5vw,86px)}
+.signin-art-body h1{font-size:clamp(48px,4.5vw,77px);letter-spacing:-3px;line-height:1.13}
+.signin-art-body h1 em{background:linear-gradient(100deg,#73e6e7,#96c0ff);color:transparent;-webkit-background-clip:text;background-clip:text}
+.signin-art-body p{font-size:14px;max-width:480px}
+.signin-console{width:min(530px,100%);margin-top:38px;background:#092941dd;border:1px solid #457e9a89;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px #03122766}
+.signin-console-header{display:flex;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid #4b80935c;color:#a4d5e8;font-size:9px;letter-spacing:.7px;font-weight:800}
+.signin-console-header>span:first-child{display:flex;align-items:center;gap:8px}.signin-console-pulse{width:7px;height:7px;background:#68e9d0;border-radius:50%}
+.signin-console-body{padding:21px}.signin-console-path{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.signin-console-node{display:flex;align-items:center;gap:7px;background:#1d517090;border:1px solid #468ca171;border-radius:8px;padding:10px;color:#bde7f2;font-size:9px;font-weight:800}.signin-console-node svg{color:#75e7e0}
+.signin-console-wire{flex:1;height:1px;background:repeating-linear-gradient(90deg,#5bced4 0 5px,transparent 5px 9px)}
+.signin-console-caption{display:flex;align-items:center;gap:8px;margin-top:16px;color:#9fc4d8;font-size:10px}
+.signin-form-side{background:radial-gradient(circle at 88% 5%,#eaf0ff,transparent 50%),#f7f9fd;padding:34px 42px}
+.signin-card{background:#fff;border:1px solid #e6edf6;border-radius:21px;box-shadow:0 25px 65px #193c7213;max-width:470px;padding:38px 42px}
+.signin-card h2{font-size:30px}.signin-card input{height:50px;border-radius:9px}.signin-submit{background:linear-gradient(120deg,#2c5bdf,#457bf0);height:52px}
+.signin-secure{background:linear-gradient(135deg,#e2efff,#ebe9ff)}.signin-notice{background:#f5faff;border-color:#e5eef9}
+@media(max-width:1120px){.signin-art{padding:35px}.signin-form-side{padding:25px}}
+@media(max-width:880px){.signin-shell{grid-template-columns:1fr}.signin-art{min-height:280px}.signin-art-body h1{font-size:39px}.signin-console{display:none}.signin-form-side{padding:25px 20px}.signin-card{padding:32px 28px}}
+@media(max-width:480px){.signin-card{padding:27px 20px}.signin-art{min-height:255px}}
