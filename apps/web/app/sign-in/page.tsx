@@ -22,12 +22,17 @@ export default function SignIn() {
     finally { setWorking(false); }
   }
   return <div className="signin-shell">
-    <section className="signin-art" aria-label="DataNexus platform overview">
+    <section className="signin-art" aria-label="DataNexus aviation intelligence platform overview">\n      <div className="signin-photo-backdrop" aria-hidden="true"/>
       <div className="signin-brand"><span className="signin-mark"><Layers3 size={24}/></span><div>Data<span>Nexus</span><sup>AI</sup><small>ENTERPRISE INTELLIGENCE</small></div></div>
       <div className="signin-art-body"><div className="signin-label"><span className="signin-pulse"/> AVIATION INTELLIGENCE PLATFORM</div><h1>Intelligence<br/>at every <em>altitude.</em></h1><p>A unified command center for aviation data, reliable engineering and evidence-based operational decisions.</p>
-        <div className="signin-infra"><span><Activity size={17}/> EVENT STREAMS</span><span><Database size={17}/> DATA LAKEHOUSE</span><span><Plane size={17}/> AVIATION OPS</span></div><div className="signin-console"><div className="signin-console-header"><span><span className="signin-console-pulse"/> AVIATION DATA NETWORK</span><span>ENGINEERING PREVIEW / LOCAL</span></div><div className="signin-console-body"><div className="signin-console-path"><span className="signin-console-node"><Radar size={20}/> INGEST</span><span className="signin-console-wire"/><span className="signin-console-node"><Workflow size={20}/> TRANSFORM</span><span className="signin-console-wire"/><span className="signin-console-node"><Database size={20}/> ANALYZE</span></div><div className="signin-console-caption"><Sparkles size={15}/> Streaming → Lakehouse → Operational insights</div></div></div>
+        <div className="signin-infra"><span><Activity size={17}/> EVENT STREAMS</span><span><Database size={17}/> DATA LAKEHOUSE</span><span><Plane size={17}/> AVIATION OPS</span></div>
+        <div className="signin-photo-gallery" aria-label="Aviation project imagery">
+          <div className="signin-photo-tile signin-photo-aircraft"><span className="signin-photo-kicker">01 / FLEET INTELLIGENCE</span><strong>Aircraft operations</strong><span>Monitoring-ready aviation data foundation</span></div>
+          <div className="signin-photo-tile signin-photo-airport"><span className="signin-photo-kicker">02 / AIRPORT OPERATIONS</span><strong>Dubai aviation network</strong><span>Airports · data pipelines · decision support</span></div>
+        </div><div className="signin-console"><div className="signin-console-header"><span><span className="signin-console-pulse"/> AVIATION DATA NETWORK</span><span>ENGINEERING PREVIEW / LOCAL</span></div><div className="signin-console-body"><div className="signin-console-path"><span className="signin-console-node"><Radar size={20}/> INGEST</span><span className="signin-console-wire"/><span className="signin-console-node"><Workflow size={20}/> TRANSFORM</span><span className="signin-console-wire"/><span className="signin-console-node"><Database size={20}/> ANALYZE</span></div><div className="signin-console-caption"><Sparkles size={15}/> Streaming → Lakehouse → Operational insights</div></div></div>
       </div>
-      <div className="signin-art-footer"><span><ShieldCheck size={16}/> Protected local workspace</span><span>DATANEXUS / 3A.2</span></div>
+      <div className="signin-art-footer"><span><ShieldCheck size={16}/> Protected local workspace</span><span>DATANEXUS / AVIATION INTELLIGENCE</span></div>
+      <div className="signin-image-credit">Illustrative airport photography: <a target="_blank" rel="noreferrer" href="https://commons.wikimedia.org/wiki/File:A2613-Dubai_Airport-Emirates2.jpg">A2613 (CC BY-SA 4.0)</a> · <a target="_blank" rel="noreferrer" href="https://commons.wikimedia.org/wiki/File:Dubai_Airport_overview.jpg">Umair Shaikh (CC BY-SA 2.0)</a> · No airline affiliation</div>
       <div className="signin-orbit one"/><div className="signin-orbit two"/><div className="signin-orbit three"/>
     </section>
     <section className="signin-form-side">

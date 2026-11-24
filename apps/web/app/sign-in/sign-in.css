@@ -69,3 +69,34 @@
 @media(max-width:1120px){.signin-art{padding:35px}.signin-form-side{padding:25px}}
 @media(max-width:880px){.signin-shell{grid-template-columns:1fr}.signin-art{min-height:280px}.signin-art-body h1{font-size:39px}.signin-console{display:none}.signin-form-side{padding:25px 20px}.signin-card{padding:32px 28px}}
 @media(max-width:480px){.signin-card{padding:27px 20px}.signin-art{min-height:255px}}
+
+/* Photo-led aviation sign-in: documented Creative Commons images,
+   remote imagery is illustrative and never presented as telemetry. */
+.signin-art{isolation:isolate;background:linear-gradient(120deg,#07172b,#092e4d);min-width:0}
+.signin-photo-backdrop{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(90deg,#061526e8 2%,#08223ad6 48%,#071d31a0 100%),linear-gradient(0deg,#061627 0%,transparent 42%),url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=1600");background-size:cover;background-position:center;opacity:.96}
+.signin-art:before{z-index:0;opacity:.12}
+.signin-brand,.signin-art-body,.signin-art-footer,.signin-image-credit{position:relative;z-index:2}
+.signin-art-body{margin-top:28px}
+.signin-art-body h1{font-size:clamp(43px,4vw,67px);margin:20px 0 12px;text-shadow:0 3px 25px #04132684}
+.signin-art-body p{color:#d2e7f0;text-shadow:0 1px 8px #00172f;max-width:525px}
+.signin-infra{margin-top:22px}
+.signin-infra span{background:#0b2b44c2;border:1px solid #77bcd169;backdrop-filter:blur(9px)}
+.signin-photo-gallery{display:grid;grid-template-columns:1fr 1fr;gap:13px;max-width:555px;margin-top:26px}
+.signin-photo-tile{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;min-height:150px;overflow:hidden;border:1px solid #ffffff45;border-radius:13px;padding:17px;box-shadow:0 12px 28px #00132665;background-position:center;background-size:cover}
+.signin-photo-tile:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#03172cee 2%,#062443a0 55%,#09315b15);z-index:-1}
+.signin-photo-aircraft{background-image:url("https://commons.wikimedia.org/wiki/Special:FilePath/A2613-Dubai_Airport-Emirates2.jpg?width=780")}
+.signin-photo-airport{background-image:url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=900")}
+.signin-photo-kicker{font-size:9px;font-weight:800;letter-spacing:1.3px;color:#83edf0;margin-bottom:9px}
+.signin-photo-tile strong{font-size:14px;line-height:1.25;color:#fff;letter-spacing:-.2px}
+.signin-photo-tile>span:last-child{font-size:10px;color:#d0e6f2;line-height:1.5;margin-top:5px}
+.signin-console{display:none}
+.signin-orbit{display:none}
+.signin-art-footer{margin-top:20px;color:#bed8e7}
+.signin-image-credit{font-size:9px;color:#c8dce7b3;margin-top:11px;line-height:1.6}
+.signin-image-credit a{color:#c4ebfa;text-decoration:underline;text-underline-offset:2px}
+.signin-form-side{background:radial-gradient(circle at 80% 10%,#eaf0ff,transparent 50%),#f5f8fc}
+.signin-card{box-shadow:0 26px 70px #1b3f7515}
+@media(max-width:1120px){.signin-photo-tile{min-height:125px}.signin-photo-gallery{gap:8px}}
+@media(max-width:880px){.signin-art{min-height:350px;padding:24px}.signin-art-body{margin:30px 0 12px}.signin-art-body h1{font-size:37px}.signin-photo-gallery{display:none}.signin-photo-backdrop{background-position:center 45%}.signin-image-credit{font-size:8px}.signin-art-footer{display:flex}}
+@media(max-width:480px){.signin-art{min-height:315px}.signin-art-body h1{font-size:32px}.signin-art-body p{display:block;font-size:11px;line-height:1.55}.signin-image-credit{margin-top:6px}}
+@media(prefers-reduced-motion:reduce){.signin-photo-tile{transition:none}}
