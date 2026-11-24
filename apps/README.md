@@ -10,6 +10,14 @@ customer data.
 
 Existing Kafka, Spark, Iceberg and S3 Compose setups remain separate.
 
+**Local SQLite WAL note:** The portal mounts the development SQLite
+directory writable because SQLite WAL readers may need a shared-memory file
+beside the database. FastAPI still opens the database in `mode=ro` and
+enables `PRAGMA query_only=ON`; no write endpoints exist. A writable bind
+mount is not a production security boundary: do not deploy publicly or
+use sensitive data. A production service must use a separately authorized,
+least-privilege datastore.
+
 ## Quick start — Windows PowerShell
 Run commands separately:
 

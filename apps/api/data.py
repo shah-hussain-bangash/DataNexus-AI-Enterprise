@@ -15,6 +15,7 @@ def read_events(path, limit=100, query=""):
         return {"configured": False, "events": [], "total": 0, "message": "SQLite event sink not found. Run the Phase 2A consumer to populate data/dev/aviation.sqlite3."}
     limit = max(1, min(int(limit), 500))
     with closing(sqlite3.connect(f"file:{db_path.resolve().as_posix()}?mode=ro", uri=True)) as connection:
+        connection.execute("PRAGMA query_only=ON")
         connection.row_factory = sqlite3.Row
         search = "%" + query.strip()[:80].replace("%", r"\%").replace("_", r"\_") + "%"
         where = "WHERE (icao24 LIKE ? ESCAPE '\\' OR tenant_id LIKE ? ESCAPE '\\')" if query.strip() else ""

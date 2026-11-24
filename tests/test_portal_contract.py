@@ -46,7 +46,7 @@ class PortalContractTests(unittest.TestCase):
     def test_compose_is_localhost_only(self):
         text = (ROOT / "docker-compose.portal.yml").read_text(encoding="utf-8")
         self.assertIn("127.0.0.1:13000:3000", text)
-        self.assertIn("./data/dev:/opt/project/data/dev:ro", text)
+        self.assertIn("./data/dev:/opt/project/data/dev", text)
 
     def test_frontend_routes_and_no_fake_status(self):
         text = (ROOT / "apps/web/app/page.tsx").read_text(encoding="utf-8")
