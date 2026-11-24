@@ -3,6 +3,7 @@ import os
 from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from auth import authenticate, require_user, TTL_SECONDS
+from authorization import require_permission, require_tenant
 from data import read_events, summarize_events
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
@@ -45,16 +46,16 @@ def login(payload: LoginRequest):
 def me(user: dict = Depends(require_user)):
     return user
 @app.get("/api/v1/events")
-def events(limit: int = Query(100, ge=1, le=500), q: str = Query("", max_length=80), user: dict = Depends(require_user)):
+def events(limit: int = Query(100, ge=1, le=500), q: str = Query("", max_length=80), tenant_id: str | None = Query(None, max_length=100), user: dict = Depends(require_permission("aviation:read"))):
     try:
-        return read_events(DB_PATH, limit=limit, query=q, tenant_id=user["tenant_id"])
+        return read_events(DB_PATH, limit=limit, query=q, tenant_id=require_tenant(user, requested_tenant=tenant_id))
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail="Local event database unavailable") from exc
 @app.get("/api/v1/overview")
-def overview(user: dict = Depends(require_user)):
+def overview(user: dict = Depends(require_permission("overview:read"))):
     try:
         return {
-            "events": summarize_events(read_events(DB_PATH, limit=500, tenant_id=user["tenant_id"])),
+            "events": summarize_events(read_events(DB_PATH, limit=500, tenant_id=require_tenant(user))),
             "environment": "local-development",
             "workspace": {"role": user["role"], "tenant_id": user["tenant_id"], "username": user["username"]},
             "systems": [
@@ -66,13 +67,13 @@ def overview(user: dict = Depends(require_user)):
             "limitations": [
                 "SQLite counts do not indicate streaming or object-store health.",
                 "Local single-user sessions are not enterprise SSO or multiuser RBAC.",
-                "Infrastructure telemetry and persistent security audit trails are future phases.",
+                "Infrastructure telemetry and immutable enterprise audit trails remain future phases.",
             ],
         }
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail="Local event database unavailable") from exc
 @app.get("/api/v1/quality")
-def quality(user: dict = Depends(require_user)):
+def quality(user: dict = Depends(require_permission("quality:read"))):
     try:
         return {"events": summarize_events(read_events(DB_PATH, limit=500, tenant_id=user["tenant_id"])),
                 "checks": [
@@ -84,8 +85,8 @@ def quality(user: dict = Depends(require_user)):
         raise HTTPException(status_code=503, detail="Local event database unavailable") from exc
 
 @app.get("/api/v1/audit")
-def audit_events(limit: int = Query(50, ge=1, le=100), user: dict = Depends(require_user)):
+def audit_events(limit: int = Query(50, ge=1, le=100), user: dict = Depends(require_permission("audit:read"))):
     try:
-        return {"events": recent_events(user["tenant_id"], limit=limit)}
+        return {"events": recent_events(require_tenant(user), limit=limit)}
     except (OSError, RuntimeError) as exc:
         raise HTTPException(status_code=503, detail="Audit journal unavailable") from exc
