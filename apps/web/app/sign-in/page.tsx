@@ -22,9 +22,10 @@ export default function SignIn() {
     finally { setWorking(false); }
   }
   return <div className="signin-shell">
-    <section className="signin-art" aria-label="DataNexus aviation intelligence platform overview">\n      <div className="signin-photo-backdrop" aria-hidden="true"/>
-      <div className="signin-brand"><span className="signin-mark"><Layers3 size={24}/></span><div>Data<span>Nexus</span><sup>AI</sup><small>ENTERPRISE INTELLIGENCE</small></div></div>
-      <div className="signin-art-body"><div className="signin-label"><span className="signin-pulse"/> AVIATION INTELLIGENCE PLATFORM</div><h1>Intelligence<br/>at every <em>altitude.</em></h1><p>A unified command center for aviation data, reliable engineering and evidence-based operational decisions.</p>
+    <section className="signin-art" aria-label="DataNexus aviation intelligence platform overview">
+      <div className="signin-photo-backdrop" aria-hidden="true"/>
+      <div className="signin-brand"><span className="signin-mark"><Plane size={24}/></span><div>Data<span>Nexus</span><sup>AI</sup><small>AVIATION INTELLIGENCE PLATFORM</small></div></div>
+      <div className="signin-art-body"><div className="signin-label"><span className="signin-pulse"/> AVIATION INTELLIGENCE PLATFORM</div><h1>Every signal.<br/><em>One intelligent<br/>command center.</em></h1><p>Unify aviation operations, reliable streaming data, and responsible AI in one intelligent workspace.</p>
         <div className="signin-infra"><span><Activity size={17}/> EVENT STREAMS</span><span><Database size={17}/> DATA LAKEHOUSE</span><span><Plane size={17}/> AVIATION OPS</span></div>
         <div className="signin-photo-gallery" aria-label="Aviation project imagery">
           <div className="signin-photo-tile signin-photo-aircraft"><span className="signin-photo-kicker">01 / FLEET INTELLIGENCE</span><strong>Aircraft operations</strong><span>Monitoring-ready aviation data foundation</span></div>
@@ -37,7 +38,7 @@ export default function SignIn() {
     </section>
     <section className="signin-form-side">
       <div className="signin-top"><span className="signin-local"><span/> LOCAL DEVELOPMENT</span><span>Phase 3A.2</span></div>
-      <div className="signin-card"><div className="signin-secure"><LockKeyhole size={23}/></div><div className="signin-heading-label">SECURE WORKSPACE ACCESS</div><h2>Welcome to mission control</h2><p>Sign in securely to manage your aviation intelligence workspace.</p>
+      <div className="signin-card"><div className="signin-secure"><LockKeyhole size={23}/></div><div className="signin-heading-label">WELCOME BACK · LOCAL DEVELOPMENT</div><h2>Sign in to DataNexus</h2><p>Access your aviation intelligence command center.</p>
       <form onSubmit={submit}>
         <label htmlFor="user-name">Username</label>
         <input id="user-name" name="username" autoComplete="username" placeholder="Your administrator username" required value={username} onChange={e => setUsername(e.target.value)}/>
@@ -46,7 +47,7 @@ export default function SignIn() {
         {error && <p className="signin-error" role="alert">{error}</p>}
         <button className="signin-submit" disabled={working} type="submit">{working ? "Signing in…" : "Enter the workspace"}<ArrowRight size={17}/></button>
       </form>
-      <div className="signin-notice"><CheckCircle2 size={17}/><span>Session tokens are stored in an HttpOnly browser cookie. This local milestone is not enterprise SSO.</span></div></div>
+      <div className="signin-notice"><CheckCircle2 size={17}/><span>Protected local session with PostgreSQL authentication auditing when enabled. Enterprise SSO, MFA and RBAC are not yet implemented.</span></div></div>
       <div className="signin-help">Need to configure access? Run <code>python scripts/create_portal_env.py</code> from the repository.</div>
     </section>
   </div>;

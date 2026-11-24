@@ -140,7 +140,7 @@ export default function Home() {
   return <div className="shell">
     {mobileOpen && <button className="mobile-backdrop" onClick={() => setMobileOpen(false)} aria-label="Close menu"/>}
     <aside className={"sidebar " + (mobileOpen ? "sidebar-open" : "")}>
-      <div className="brand"><div className="brand-mark"><Layers3 size={23} strokeWidth={2.2}/></div><div><div className="brand-name">Data<span>Nexus</span><sup>AI</sup></div><div className="brand-sub">ENTERPRISE INTELLIGENCE</div></div></div>
+      <div className="brand"><div className="brand-mark"><Plane size={23} strokeWidth={2.2}/></div><div><div className="brand-name">Data<span>Nexus</span><sup>AI</sup></div><div className="brand-sub">ENTERPRISE INTELLIGENCE</div></div></div>
       <div className="workspace-switch"><div className="workspace-avatar"><Command size={18}/></div><div className="workspace-info"><strong>Aviation Workspace</strong><span>Tenant {overview?.workspace?.tenant_id || "local"} · Development</span></div><ChevronDown size={15}/></div>
       <div className="nav-area">{nav.map(group => <div className="nav-group" key={group.heading}><div className="nav-heading">{group.heading}</div>{group.items.map(item =>
         <button key={item.id} className={"nav-item " + (view === item.id ? "active" : "")} onClick={() => setPage(item.id)}>
@@ -164,7 +164,7 @@ export default function Home() {
           <section className="hero">
             <div className="hero-content">
               <div className="hero-tag"><span className="hero-tag-dot"/> DATA OPERATIONS / AVIATION INTELLIGENCE <span className="hero-tag-separator">•</span> LOCAL WORKSPACE</div>
-              <h2>Mission control for<br/><em>intelligent operations.</em></h2>
+              <h2>Reliable aviation data<br/><em>for smarter operations.</em></h2>
               <p>Explore aviation events, validate data quality, and navigate your enterprise lakehouse architecture from one workspace.</p>
               <div className="hero-actions"><button onClick={() => setPage("aviation")} className="hero-link">Explore aviation intelligence <ArrowUpRight size={16}/></button><button className="hero-secondary" onClick={() => setPage("pipelines")}>View data architecture <ArrowRight size={16}/></button></div>
             </div>
@@ -178,6 +178,20 @@ export default function Home() {
           </section>
           <div className="section-head"><div><span className="section-overline">AT A GLANCE</span><h3>Platform snapshot</h3><p>Read-only observations from your local event store</p></div><span className="section-note"><span className="status-dot"/> {lastRefresh ? "Updated " + lastRefresh.toLocaleTimeString() : "Loading"}</span></div>
           <div className="metrics"><MetricCard label="Stored events" value={summary?.configured ? fmt(summary.total_events) : "—"} change="SQLite source" icon={Database} color="blue"/><MetricCard label="Distinct aircraft" value={summary?.configured ? fmt(summary.aircraft_in_sample) : "—"} change="Sample scope" icon={Plane} color="mint"/><MetricCard label="Position records" value={summary?.configured ? fmt(summary.positions_in_sample) : "—"} change="Sample scope" icon={Radar} color="violet"/><MetricCard label="Data tenants" value={summary?.configured ? fmt(summary.tenants_in_sample) : "—"} change="Sample scope" icon={Layers3} color="orange"/></div>
+          <section className="aviation-feature-strip" aria-label="Explore DataNexus platform domains">
+            <button className="aviation-feature aviation-feature-flight" onClick={() => setPage("aviation")}>
+              <span className="aviation-feature-category"><Plane size={15}/> AVIATION OPERATIONS</span>
+              <strong>Aircraft intelligence</strong><span>Inspect real recorded flight positions</span><ArrowUpRight className="aviation-feature-arrow" size={19}/>
+            </button>
+            <button className="aviation-feature aviation-feature-engine" onClick={() => setPage("intelligence")}>
+              <span className="aviation-feature-category"><Sparkles size={15}/> AI & MODEL OPS</span>
+              <strong>Predictive maintenance</strong><span>Planned capability · not yet operational</span><ArrowUpRight className="aviation-feature-arrow" size={19}/>
+            </button>
+            <button className="aviation-feature aviation-feature-data" onClick={() => setPage("pipelines")}>
+              <span className="aviation-feature-category"><Workflow size={15}/> DATA ENGINEERING</span>
+              <strong>Lakehouse & streaming</strong><span>Explore pipeline architecture and status</span><ArrowUpRight className="aviation-feature-arrow" size={19}/>
+            </button>
+          </section>
           <div className="dashboard-grid"><div className="card map-card"><div className="card-header"><div><h3>Aircraft position overview</h3><p>Location observations from your local dataset</p></div><button className="card-action" onClick={() => setPage("aviation")}>Explore <ArrowUpRight size={15}/></button></div><FlightMap events={events?.events || []}/></div>
           <div className="card health-card"><div className="card-header"><div><h3>Platform integrations</h3><p>Monitoring connection status</p></div><Server size={18} className="muted-icon"/></div><div className="health-list">{(overview?.systems || []).map((system, i) => <div className="health-row" key={system.key}><div className={"health-icon health-" + i}>{i === 0 ? <Activity size={17}/> : i === 1 ? <Workflow size={17}/> : i === 2 ? <Layers3 size={17}/> : <Cloud size={17}/>}</div><span>{system.name}</span><span className="status-neutral">Not monitored</span></div>)}</div><div className="health-foot"><ShieldCheck size={15}/><span>Infrastructure health telemetry is not yet connected.</span></div></div></div>
           <div className="dashboard-grid lower-grid"><div className="card"><div className="card-header"><div><h3>Latest aircraft events</h3><p>Most recent source observations</p></div><button className="card-action" onClick={() => setPage("aviation")}>View all <ArrowUpRight size={15}/></button></div><EventTable rows={list.slice(0, 5)} onSelect={setSelected} compact/></div><div className="card insight-card"><div className="insight-icon"><CheckCheck size={22}/></div><h3>Engineering confidence</h3><p>Quality checks must reflect the actual data scope. This dashboard distinguishes test evidence from live monitoring.</p><div className="insight-divider"/><div className="insight-stat"><span>Duplicate event IDs (sample)</span><strong>{summary?.configured ? fmt(summary.duplicate_ids_in_sample) : "—"}</strong></div><div className="insight-stat"><span>Last event timestamp</span><strong className="small-stat">{dateLabel(summary?.last_source_event_at)}</strong></div><button className="insight-link" onClick={() => setPage("quality")}>Inspect quality evidence <ArrowRight size={15}/></button></div></div>

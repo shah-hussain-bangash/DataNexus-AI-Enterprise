@@ -22,6 +22,18 @@ class PortalVisualRefreshTests(unittest.TestCase):
         self.assertIn("signin-photo-airport", styles)
         self.assertIn("@media(max-width:880px)", styles)
 
+    def test_approved_design_is_functional_and_image_led(self):
+        page = (ROOT / "apps/web/app/page.tsx").read_text(encoding="utf-8")
+        signin = (ROOT / "apps/web/app/sign-in/page.tsx").read_text(encoding="utf-8")
+        css = (ROOT / "apps/web/app/globals.css").read_text(encoding="utf-8")
+        auth_css = (ROOT / "apps/web/app/sign-in/sign-in.css").read_text(encoding="utf-8")
+        for term in ("aviation-feature-strip", "aviation-feature-engine", "setPage(\"aviation\")", "setPage(\"pipelines\")", "/api/portal/overview"):
+            self.assertIn(term, page)
+        for term in ("onSubmit={submit}", "/api/auth/login", "signin-photo-backdrop"):
+            self.assertIn(term, signin)
+        self.assertIn(".aviation-feature-strip", css)
+        self.assertIn(".signin-shell", auth_css)
+
     def test_refresh_responsive_styles(self):
         css = (ROOT / "apps/web/app/globals.css").read_text(encoding="utf-8")
         sign = (ROOT / "apps/web/app/sign-in/sign-in.css").read_text(encoding="utf-8")

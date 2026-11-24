@@ -100,3 +100,35 @@
 @media(max-width:880px){.signin-art{min-height:350px;padding:24px}.signin-art-body{margin:30px 0 12px}.signin-art-body h1{font-size:37px}.signin-photo-gallery{display:none}.signin-photo-backdrop{background-position:center 45%}.signin-image-credit{font-size:8px}.signin-art-footer{display:flex}}
 @media(max-width:480px){.signin-art{min-height:315px}.signin-art-body h1{font-size:32px}.signin-art-body p{display:block;font-size:11px;line-height:1.55}.signin-image-credit{margin-top:6px}}
 @media(prefers-reduced-motion:reduce){.signin-photo-tile{transition:none}}
+
+
+/* Approved photographic sign-in system: two-column split and light auth panel. */
+.signin-shell{grid-template-columns:minmax(0,1.55fr) minmax(380px,.9fr);min-height:100vh;background:#ecf5fc}
+.signin-art{min-width:0;min-height:100vh;padding:36px clamp(30px,5vw,90px);background:#031c34}
+.signin-photo-backdrop{background-image:linear-gradient(180deg,#031b32fa 0%,#05243bde 34%,#07304872 61%,#06192c47 100%),url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=1800");background-position:center,center 52%;background-size:cover}
+.signin-art:before{background-image:radial-gradient(circle at 75% 35%,transparent,#05253b20 60%);opacity:.45}
+.signin-brand{font-size:23px;align-items:center;color:white}.signin-brand span:not(.signin-mark){color:#edc376}.signin-mark{background:linear-gradient(145deg,#eac781,#ba8548);box-shadow:0 7px 22px #e1af6945;color:#08213c}
+.signin-brand small{color:#d1e6f2}
+.signin-art-body{margin-top:35px;max-width:700px}
+.signin-label{color:#c5e4f1}.signin-art-body h1{font-size:clamp(41px,4.25vw,69px);line-height:1.1;letter-spacing:-2.4px;margin:23px 0 18px;color:white;text-shadow:0 5px 20px #00101f}
+.signin-art-body h1 em{color:#74eee9;background:linear-gradient(90deg,#77f5ec,#9bd8ff);-webkit-background-clip:text;background-clip:text}
+.signin-art-body p{color:#d6eaf3;font-size:15px;line-height:1.65;max-width:535px}
+.signin-infra{margin-top:25px;gap:10px}.signin-infra span{color:#dffcff;border:1px solid #74dee88a;background:#072e46c7;padding:11px 13px;border-radius:21px}
+.signin-photo-gallery{max-width:690px;gap:14px;margin-top:28px}.signin-photo-tile{min-height:175px;border-radius:12px;border-color:#83c3de70}
+.signin-photo-aircraft{background-position:50% 50%}.signin-photo-airport{background-position:50% 45%}
+.signin-art-footer{color:#dcecf3}.signin-image-credit{color:#b5d8ea;font-size:9px}.signin-image-credit a{color:#d1efff}
+.signin-form-side{background:radial-gradient(circle at 85% 10%,#dcecfb,#f4faff 45%,#eaf5fb 100%);padding:32px clamp(22px,3vw,52px)}
+.signin-top{color:#466581;font-size:11px}.signin-local{background:#e6f9fb;color:#078e9b;border:1px solid #69d3d9;padding:9px 13px;border-radius:18px}
+.signin-local span{background:#19b6bb}.signin-card{background:transparent;box-shadow:none;border:none;padding:26px 4px;max-width:470px}
+.signin-secure{margin:0 auto 26px;background:#dff4fb;border:1px solid #c4e8f4;color:#156d9a;width:65px;height:65px}
+.signin-heading-label{text-align:center;color:#3186a0}.signin-card h2{text-align:center;font-size:clamp(23px,2.3vw,34px);letter-spacing:-1.4px;color:#092c49}
+.signin-card>p{text-align:center;color:#5d7f96;font-size:13px}
+.signin-card label{font-size:12px;color:#193854}.signin-card input{height:53px;background:#f8fcff;border:1px solid #9ebdd1;border-radius:10px;color:#102f4b;font-size:13px}
+.signin-card input:focus{border-color:#04b3b9;box-shadow:0 0 0 3px #04b3b920}.signin-password-heading span{color:#738ca2}
+.signin-submit{height:55px;background:linear-gradient(100deg,#00bcb3,#006885);border:0;box-shadow:0 11px 22px #067a8b3d;border-radius:11px;font-size:14px}
+.signin-submit:hover:not(:disabled){background:linear-gradient(100deg,#00a8aa,#005d7f)}
+.signin-notice{color:#38647b;background:#edf8fc;border-color:#d6ecf3}.signin-notice svg{color:#b28c3d}
+.signin-help{color:#66889d}.signin-help code{color:#316c92}
+@media(max-width:1100px){.signin-shell{grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr)}.signin-art{padding:30px}.signin-photo-gallery{grid-template-columns:1fr}.signin-photo-tile:last-child{display:none}.signin-art-body h1{font-size:42px}}
+@media(max-width:880px){.signin-shell{grid-template-columns:1fr}.signin-art{min-height:350px;padding:26px}.signin-art-body{margin:38px 0 16px}.signin-art-body h1{font-size:38px}.signin-photo-gallery{display:none}.signin-form-side{min-height:570px;padding:25px 22px}.signin-card{padding:26px 2px}.signin-photo-backdrop{background-position:50% 61%}.signin-art-footer{margin-top:18px}}
+@media(max-width:480px){.signin-art{min-height:345px}.signin-art-body h1{font-size:31px}.signin-art-body p{font-size:12px}.signin-infra{display:none}.signin-brand{font-size:18px}.signin-card h2{font-size:26px}}

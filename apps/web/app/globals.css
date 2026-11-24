@@ -53,3 +53,66 @@ body{background:var(--bg)}
 @media(max-width:1120px){.hero-visual{right:-130px;opacity:.28}.sidebar{width:250px}.hero-content{max-width:720px}}
 @media(max-width:900px){.sidebar{width:270px}.content{padding:26px 19px}}
 @media(max-width:590px){.page-heading h1{font-size:27px}.hero{min-height:294px}.hero-content{padding:28px 23px}.hero h2{font-size:29px}.hero-visual{right:-220px;opacity:.12}.hero-secondary{display:none}}
+
+
+/* Approved aviation command-center visual system. All numerical values are API-bound. */
+:root{--bg:#04172b;--text:#e8f4ff;--muted:#91afc6;--border:#245676;--blue:#04b6c1;--dark:#04182f}
+body{background:#05182c;color:#e7f4ff}
+.shell{background:#05182c}
+.sidebar{background:linear-gradient(180deg,#05172a,#062844 65%,#05172c);border-right:1px solid #1c5271;width:258px}
+.brand{padding:26px 18px}.brand-mark{background:linear-gradient(125deg,#d6a85e,#eecb81);color:#061c33;box-shadow:0 0 20px #dfa95332}
+.brand-name span{color:#f0c675}.brand-name sup{color:#f4cf8b}.brand-sub{color:#9cbacd}
+.workspace-switch{background:#0b3450;border-color:#2e6b80}.workspace-info strong{color:#fff}
+.nav-heading{color:#f0bc60}.nav-item{color:#bcd8e7}.nav-item.active{background:linear-gradient(90deg,#006d83,#0b4058);border:1px solid #1dbfcb;color:#f6ffff;box-shadow:0 0 18px #12c4d028}
+.nav-item.active>svg{color:#73f5f2}.nav-indicator{background:#eec778}.nav-item:not(.active):hover{background:#153e58}
+.platform-note{background:linear-gradient(130deg,#092d4b,#0b4d60);border-color:#257488}.platform-note strong{color:#f1fcff}.platform-note p{color:#a5c6db}
+.platform-note button{color:#7aefee}.profile{border-top:1px solid #20445c}.profile span{color:#94aec1}
+.main{background:radial-gradient(circle at 62% 2%,#0b3d5a,#071d34 40%,#06182b 100%)}
+.topbar{height:70px;background:#071d33eF;border-bottom:1px solid #205a76;box-shadow:0 2px 13px #00111e4d}
+.breadcrumb,.breadcrumb strong{color:#d1e8f5}.breadcrumb svg{color:#63acc3}
+.top-icon{color:#bfd9e9}.top-icon:hover{background:#154966}
+.environment-badge{background:#093f51;color:#8cebe4;border:1px solid #16b9c6}
+.content{max-width:1700px;padding:27px 28px 24px}
+.page-heading h1{color:#f6faff;font-size:31px}.page-heading p{color:#91afc6}.heading-dot{color:#e9b767}.eyebrow{color:#80deef}
+.button-quiet{background:#10334d;color:#c4e5f4;border-color:#376e8a}.button-primary{background:linear-gradient(120deg,#04b7b3,#078394);border-color:#11c8c4;color:#fff;box-shadow:0 0 13px #07b9c537}
+.warning{background:#45351f;border-color:#927a44;color:#fff0bf}
+.hero{height:265px;border-radius:15px;border:1px solid #1d6b8c;background:linear-gradient(90deg,#061c35fa 0%,#06233dcc 48%,#0d36505e 72%),url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=1600") center 54%/cover,#073351;box-shadow:0 16px 40px #00132670}
+.hero:before{opacity:.12}.hero-content{padding:30px 32px;max-width:730px;z-index:2}
+.hero h2{font-size:clamp(30px,2.7vw,44px);color:#fff;line-height:1.12;margin:16px 0 11px}
+.hero h2 em{background:linear-gradient(90deg,#eec06f,#f8dda5);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-tag{color:#d2e6f5}.hero p{max-width:480px;color:#c6dfea;line-height:1.65}
+.hero-link{background:linear-gradient(95deg,#02c9bc,#0b8b99);color:#fff}.hero-secondary{background:#0b2d4ca8;color:#dff6fc}
+.hero-visual{opacity:.24;pointer-events:none}.hero-satellite{display:none}
+.section-head h3,.card-header h3{color:#f0f8ff}.section-head p,.card-header p{color:#8eafc8}
+.section-overline{color:#f0bc61}.section-note{color:#acd5de}
+.metrics{gap:12px}.metric-card{background:linear-gradient(137deg,#0a3450,#06243d);border:1px solid #216786;box-shadow:0 8px 24px #00132360;min-height:142px;padding:18px}
+.metric-card:before{background:#35d9dc}.metric-head{color:#c1dcea}.metric-body strong{color:#f8fcff;font-size:31px}
+.metric-icon{background:#0e4b65;color:#74f3ec}.metric-footer{color:#8db5c9}.metric-pill{background:#104d58;color:#83e7bb}
+.metric-accent span{background:#31e0d3}.metric-accent-mint span,.metric-accent-violet span,.metric-accent-orange span{background:#30d7e3}
+.card{background:linear-gradient(140deg,#092f4c,#061d34);border:1px solid #216384;box-shadow:0 8px 25px #00132650}
+.card-action{color:#72e6e5}.card-action:hover{background:#16546d}.muted-icon{color:#70a5bc}
+.map-panel{background:radial-gradient(circle at 50% 40%,#145d7c,#08344e 57%,#041b35)}
+.map-top,.map-bottom{color:#b5d9e9}.health-row{border-color:#1b4d67;color:#d8f0fb}.health-row>span{color:#e3f3f9}.health-foot{color:#9ebed0}.health-icon{background:#104762;color:#83e7ee}
+.status-neutral{background:#3a3540;border-color:#776349;color:#e7d5a9}
+.insight-card{background:linear-gradient(160deg,#114562,#06233d)}.insight-stat{color:#b5d7e3}.insight-stat strong{color:#fff}
+.table-wrap{color:#e6f5fc}.table-wrap th{color:#9ac5d6;border-color:#215772}.table-wrap td{border-color:#184966;color:#cfebf6}
+.table-wrap tr:hover td{background:#0c3652}.aircraft-cell strong{color:#fff}.aircraft-cell span{color:#9ec0d3}
+.empty-row,.muted{color:#95b7cc}.table-action{background:#0e425e;color:#78e6ed}
+.quality-row,.settings-line{border-color:#204b66}.quality-row strong,.settings-line strong{color:#eaf9ff}.quality-row p{color:#98b9cc}
+.quality-tag{color:#82ead6;background:#0b524f}.coming-soon{background:linear-gradient(125deg,#103d5c,#062139);border:1px solid #23617c}.coming-soon h2{color:#fff}.coming-soon p{color:#a8c8d8}
+.footer{color:#8babbd;border-color:#244a63}
+.drawer-overlay{background:#00101fa6}.detail-drawer{background:#08263f;color:#eaf9ff}.drawer-header h2,.drawer-field strong{color:#fff}
+.aviation-feature-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0 20px}
+.aviation-feature{position:relative;display:flex;min-height:155px;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:5px;padding:19px;text-align:left;border:1px solid #27748b;border-radius:14px;background-size:cover;background-position:center;overflow:hidden;color:white;box-shadow:0 8px 23px #0013236a}
+.aviation-feature:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#04192ef7,#041c32c1 46%,#0828401e);z-index:0}
+.aviation-feature>*{position:relative;z-index:1}.aviation-feature strong{font-size:18px;letter-spacing:-.3px}
+.aviation-feature>span:not(.aviation-feature-category){font-size:11px;color:#b7dce8}
+.aviation-feature-category{display:flex;align-items:center;gap:7px;color:#83f0ec;font-size:9px;font-weight:800;letter-spacing:1.1px;margin-bottom:5px}
+.aviation-feature-arrow{position:absolute;right:17px;bottom:19px;color:#f4c87e}
+.aviation-feature:hover{border-color:#6ce7e2;transform:translateY(-2px);transition:transform .17s,border-color .17s}
+.aviation-feature-flight{background-image:url("https://commons.wikimedia.org/wiki/Special:FilePath/A2613-Dubai_Airport-Emirates2.jpg?width=900")}
+.aviation-feature-engine{background-image:url("https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=80")}
+.aviation-feature-data{background-image:url("https://commons.wikimedia.org/wiki/Special:FilePath/Dubai_Airport_overview.jpg?width=900")}
+@media(max-width:1170px){.aviation-feature-strip{grid-template-columns:1fr 1fr}.aviation-feature:last-child{grid-column:1/-1}}
+@media(max-width:900px){.aviation-feature-strip{grid-template-columns:1fr}.aviation-feature:last-child{grid-column:auto}.hero{background-position:60% center}.content{padding:23px 18px}}
+@media(max-width:590px){.hero{min-height:310px}.hero-content{padding:24px 21px}.hero h2{font-size:29px}.hero-visual{display:none}.aviation-feature{min-height:135px}}
