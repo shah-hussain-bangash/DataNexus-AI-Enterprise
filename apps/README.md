@@ -49,7 +49,7 @@ docker compose -f docker-compose.portal.yml down
 ```
 Do not use `down -v` on the existing storage stacks.
 
-## What is real?
+The local prototype throttles repeated failed login attempts per username (five per five-minute window). This is memory-only, process-local hardening; it is **not** a distributed production brute-force defense. Do not use it instead of enterprise SSO, MFA, centralized rate limiting or a persistent audit trail.\n\n## What is real?
 - SQLite-backed event listing and counts from Phase 2A, read-only
 - Event search/filter/sort, row detail drawer, JSON export
 - Data quality sample-only duplicate and coordinate counts

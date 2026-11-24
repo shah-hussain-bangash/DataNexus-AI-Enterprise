@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from auth import authenticate, require_user, TTL_SECONDS
 from data import read_events, summarize_events
+from login_throttle import throttle, WINDOW_SECONDS
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
 app = FastAPI(title="DataNexus Portal API", version="0.2.0")
 class LoginRequest(BaseModel):
@@ -14,12 +15,20 @@ def health():
     return {"status": "ok", "service": "datanexus-portal-api", "version": "0.2.0"}
 @app.post("/auth/login")
 def login(payload: LoginRequest):
+    # Process-local backoff only; production identity must enforce distributed limits.
+    if throttle.saturated(payload.username):
+        raise HTTPException(status_code=429, detail="Too many login attempts", headers={"Retry-After": str(WINDOW_SECONDS)})
+    remaining = throttle.retry_after(payload.username)
+    if remaining:
+        raise HTTPException(status_code=429, detail="Too many login attempts", headers={"Retry-After": str(remaining)})
     try:
         token = authenticate(payload.username, payload.password)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail="Local sign-in not configured") from exc
     if not token:
+        throttle.failure(payload.username)
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    throttle.success(payload.username)
     return {"access_token": token, "token_type": "bearer", "expires_in": TTL_SECONDS}
 @app.get("/auth/me")
 def me(user: dict = Depends(require_user)):
