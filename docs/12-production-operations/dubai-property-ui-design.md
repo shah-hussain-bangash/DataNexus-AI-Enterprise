@@ -32,7 +32,7 @@ Reference: user-approved side-by-side Dubai investment dashboard screenshot (25 
 
 1. Existing login continues to reach aviation Overview and flight/event tabs.
 2. Aviation Overview has a link to Dubai Property preview.
-3. Route /dubai-property requires the same authenticated session as the portal.
+3. Route /dubai-property currently contains only public illustrative UI; do not place private data in it. Before integrating real data, add and validate server-side authentication/authorization on this route and all data APIs.
 4. The Dubai preview matches reference layout and responsive layout across desktop/tablet/mobile.
 5. Search, period selector, save, property details, quick actions, modal close and calculator work.
 6. Fixture warning visible on desktop and mobile; no fake feed status or unsourced financial results represented as real.
