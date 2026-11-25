@@ -6,6 +6,7 @@ from auth import authenticate, require_user, TTL_SECONDS
 from authorization import require_permission, require_tenant
 from data import read_events, summarize_events
 from source_registry import catalog as get_catalog, readiness as get_readiness
+from tlc_manifest import available_downloads
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
@@ -99,3 +100,10 @@ def source_catalog(user: dict = Depends(require_permission("catalog:read"))):
 @app.get("/api/v1/readiness")
 def source_readiness(user: dict = Depends(require_permission("readiness:read"))):
     return get_readiness(require_tenant(user))
+
+@app.get("/api/v1/nyc-tlc/bronze")
+def nyc_tlc_bronze(user: dict = Depends(require_permission("catalog:read"))):
+    tenant = require_tenant(user)
+    return {"tenant_id":tenant,"source":"nyc_tlc_yellow_taxi","state":"local_bronze_inventory_only",
+            "downloads":available_downloads(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")),
+            "caveat":"Raw checksummed Parquet is NOT validated row data, Gold analytics or live data."}

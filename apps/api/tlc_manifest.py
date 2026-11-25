@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-FILE_PATTERN=re.compile(r"^yellow_tripdata_(20[0-9]{2})-(0[1-9]|1[0-2])\\.parquet\\.manifest\\.json$")
+FILE_PATTERN=re.compile(r"^yellow_tripdata_(20[0-9]{2})-(0[1-9]|1[0-2])\.parquet\.manifest\.json$")
 
 def available_downloads(root):
     directory=Path(root).resolve()/"nyc_tlc"

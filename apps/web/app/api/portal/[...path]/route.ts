@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest, context: { params: { path: string[] } }) {
   const key = context.params.path.join("/");
-  if (!new Set(["overview", "events", "quality", "catalog", "readiness"]).has(key)) return NextResponse.json({error:"Not found"},{status:404});
+  if (!new Set(["overview", "events", "quality", "catalog", "readiness", "nyc-tlc/bronze"]).has(key)) return NextResponse.json({error:"Not found"},{status:404});
   const token = request.cookies.get("datanexus_session")?.value;
   if (!token) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   const url = new URL("/api/v1/" + key, process.env.API_INTERNAL_URL || "http://api:8000");
