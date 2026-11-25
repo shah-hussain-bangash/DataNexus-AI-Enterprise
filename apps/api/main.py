@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from auth import authenticate, require_user, TTL_SECONDS
 from authorization import require_permission, require_tenant
 from data import read_events, summarize_events
+from source_registry import catalog as get_catalog, readiness as get_readiness
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
@@ -90,3 +91,11 @@ def audit_events(limit: int = Query(50, ge=1, le=100), user: dict = Depends(requ
         return {"events": recent_events(require_tenant(user), limit=limit)}
     except (OSError, RuntimeError) as exc:
         raise HTTPException(status_code=503, detail="Audit journal unavailable") from exc
+
+@app.get("/api/v1/catalog")
+def source_catalog(user: dict = Depends(require_permission("catalog:read"))):
+    return get_catalog(require_tenant(user))
+
+@app.get("/api/v1/readiness")
+def source_readiness(user: dict = Depends(require_permission("readiness:read"))):
+    return get_readiness(require_tenant(user))

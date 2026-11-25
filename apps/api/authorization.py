@@ -9,7 +9,8 @@ from auth import require_user
 
 PERMISSIONS = {
     "admin": frozenset({
-        "aviation:read", "quality:read", "overview:read", "audit:read"
+        "aviation:read", "quality:read", "overview:read", "audit:read",
+        "catalog:read", "readiness:read"
     }),
 }
 
