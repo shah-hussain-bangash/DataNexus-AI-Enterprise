@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, Boxes, CheckCheck,
+  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, Boxes, Building2, CheckCheck,
   ChevronDown, ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, Cloud,
   Command, Database, Download, ExternalLink, Filter, Gauge, Layers3, LayoutDashboard,
   LockKeyhole, Menu, Plane, Radar, RefreshCw, Search, Server, Settings2, ShieldCheck,
@@ -145,8 +145,8 @@ export default function Home() {
       <div className="nav-area">{nav.map(group => <div className="nav-group" key={group.heading}><div className="nav-heading">{group.heading}</div>{group.items.map(item =>
         <button key={item.id} className={"nav-item " + (view === item.id ? "active" : "")} onClick={() => setPage(item.id)}>
           <item.icon size={18} strokeWidth={1.85}/><span>{item.label}</span>{item.hint && <small>{item.hint}</small>}{view === item.id && <span className="nav-indicator"/>}
-        </button>)}</div>)}</div>
-      <div className="sidebar-bottom">
+        </button>)}</div>)}<div className="nav-group"><div className="nav-heading">DESIGN PREVIEWS</div><a className="nav-item" href="/dubai-property" style={{textDecoration:"none",display:"flex",alignItems:"center",gap:12}}><Building2 size={18}/><span>Dubai Property UI</span></a></div></div>
+      <div className="sidebar-bottom"
         <div className="platform-note"><div className="platform-note-icon"><Gauge size={19}/></div><strong>Platform foundation</strong><p>Streaming, lakehouse and object storage are implemented. Observability integration is next.</p><button onClick={() => setPage("pipelines")}>Explore architecture <ArrowRight size={14}/></button></div>
         <div className="profile"><div className="profile-avatar">DN</div><div><strong>{overview?.workspace?.username || "Local operator"}</strong><span>{overview?.workspace?.role || "admin"} · Local session</span></div><button className="profile-signout" title="Sign out" aria-label="Sign out" onClick={() => void signOut()}><LogOut size={17}/></button></div>
       </div>
