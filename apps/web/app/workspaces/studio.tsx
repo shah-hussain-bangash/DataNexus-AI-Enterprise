@@ -30,7 +30,7 @@ export function StudioScreens({mode,domain,onNavigate,onDomain}:Props){
  const filtered=useMemo(()=>records.filter(r=>(filter==="all"||r.id===filter)&&(!onlySaved||saved.includes(r.id))&&(!q.trim()||Object.values(r).join(" ").toLowerCase().includes(q.toLowerCase()))),[filter,onlySaved,saved,q]);
  const maxPage=Math.max(0,Math.ceil(filtered.length/4)-1),curPage=Math.min(page,maxPage),visible=filtered.slice(curPage*4,curPage*4+4),chosen=records.find(r=>r.id===detail);
  const toggle=(id:string)=>setSaved(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
- const exportReview=()=>{const blob=new Blob([JSON.stringify({type:"DATA NEXUS DESIGN FIXTURE ONLY",domain,filtered:visible.map(x=>x.ref),notice:"No actual source data included"},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="datanexus-ui-review.json";a.click();URL.revokeObjectURL(url);setToast("Fixture-only design metadata exported")};
+ const exportReview=()=>{const blob=new Blob([JSON.stringify({type:"DATA NEXUS DESIGN FIXTURE ONLY",domain,filtered:visible.map(x=>x.ref),notice:"NOT REAL SOURCE DATA — design-only metadata; no actual source data included"},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="datanexus-ui-review.json";a.click();URL.revokeObjectURL(url);setToast("Fixture-only design metadata exported")};
  return <div className={"ux-studio "+(dense?"ux-dense ":"")+(highContrast?"ux-contrast":"")}>
  {toast&&<div className="ux-toast" role="status">{toast}<button onClick={()=>setToast("")} aria-label="Dismiss notification"><X size={16}/></button></div>}
  {mode==="overview"&&<>
