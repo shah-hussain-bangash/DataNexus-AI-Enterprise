@@ -25,7 +25,7 @@ class ExperienceExtensionTests(unittest.TestCase):
   self.assertIn('setCommandOpen(false)',self.code)
 
  def test_controls_are_local_and_no_permission_or_prod_calls(self):
-  for value in ("datanexus.layout.preview.v1","window.localStorage","Not connected","No actual lineage graph","Create user — unavailable","Unverified","no production workflows"):
+  for value in ("datanexus.layout.preview.v1","window.localStorage","Not connected","No actual lineage graph","Create user — unavailable","Unverified","No data connectors or production workflows are started automatically"):
    if value=="No actual lineage graph":
     self.assertIn("No actual lineage graph is connected",self.code)
    else:
