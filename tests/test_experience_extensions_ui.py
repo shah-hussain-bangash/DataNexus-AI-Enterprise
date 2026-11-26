@@ -14,7 +14,7 @@ class ExperienceExtensionTests(unittest.TestCase):
  def test_dashboard_navigation_and_deep_links(self):
   self.assertIn('["experience","UX Enhancements"',self.page)
   self.assertIn('<ExperienceExtensions domain={domain}',self.page)
-  self.assertIn('|"experience";',self.page)
+  self.assertRegex(self.page, r'type Mode=[^\n]*\|"experience"(?:\||;)')
   self.assertIn('mode==="experience"?"Dashboard Experience"',self.page)
 
  def test_nine_requested_ux_extensions_present(self):
