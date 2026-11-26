@@ -9,6 +9,8 @@ type Catalog={tenant_id:string;environment:string;sources:Source[]};
 type Bronze={tenant_id:string;source:string;state:string;downloads:{period:string;file_name:string;bytes:number;sha256:string;stage:string;schema_validated:boolean;row_count:null}[];caveat:string};
 type GoldReport={tenant_id:string;source_month:string;source_sha256:string;validated_source_rows:number;silver_rows:number;quarantined_rows:number;in_month_trip_count:number;outside_month_trip_count:number;in_month_days:number;outside_month_days:number;daily:{date:string;trip_count:number;trip_distance_sum:number;total_amount_sum:number;within_source_month:boolean}[];caveat:string};
 type QualityEvidence={tenant_id:string;state:string;source_month:string;accepted_percent:number;quarantined_percent:number;source_records:number;silver_records:number;quarantined_records:number;out_of_month_trips:number;report_age_hours:number;report_age_band:string;validation_warning_counts:Record<string,number>;transformation_rejection_reasons:Record<string,number>;reconciliation_ok:boolean;production_approved:boolean;validation_completed_at_utc:string;report_generated_at_utc:string;live_source_freshness:null;caveat:string};
+type MtaObservation={event_id:string;feed_id:string;provider_timestamp_utc:string;observation_age_seconds:number;entities:number;trip_updates:number;vehicle_positions:number;alerts:number};
+type MtaResponse={tenant_id:string;state:string;count:number;observations:MtaObservation[];live_stream_connected:boolean;production_approved:boolean;caveat?:string};
 type Readiness={tenant_id:string;release_status:string;approved_controls:number;required_controls:number;controls:{id:string;status:string}[]};
 type Load<T>={state:"loading"|"ready"|"unauthorized"|"error";data?:T;message?:string};
 export default function BackendEvidence(){
@@ -17,6 +19,7 @@ export default function BackendEvidence(){
  const [bronze,setBronze]=useState<Load<Bronze>>({state:"loading"});
  const [gold,setGold]=useState<Load<GoldReport>>({state:"loading"});
  const [quality,setQuality]=useState<Load<QualityEvidence>>({state:"loading"});
+ const [mta,setMta]=useState<Load<MtaResponse>>({state:"loading"});
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
   let live=true;
@@ -31,12 +34,13 @@ export default function BackendEvidence(){
     if(live)setter({state:"error",message:"Cannot reach backend API"});
    }
   }
-  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});
+  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});
   void load<Catalog>("catalog",setCatalog);
   void load<Readiness>("readiness",setReadiness);
   void load<Bronze>("nyc-tlc/bronze",setBronze);
   void load<GoldReport>("nyc-tlc/reporting",setGold);
   void load<QualityEvidence>("nyc-tlc/quality",setQuality);
+  void load<MtaResponse>("mta/observations",setMta);
   return()=>{live=false};
  },[refresh]);
  return <section className="evidence-root" aria-label="Authenticated enterprise backend readiness">
@@ -49,6 +53,16 @@ export default function BackendEvidence(){
     {readiness.state==="loading"?<p role="status">Loading release-readiness evidence...</p>:readiness.state==="unauthorized"?<div className="evidence-alert"><LockKeyhole size={18}/> Sign in to view tenant release-readiness status.</div>:readiness.state==="error"?<div className="evidence-alert"><AlertTriangle size={18}/>{readiness.message}</div>:<><div className="evidence-count">{readiness.data?.approved_controls} / {readiness.data?.required_controls}<span>Approved controls — {readiness.data?.release_status}</span></div><div className="evidence-rows">{readiness.data?.controls.map(c=><div key={c.id}><strong>{c.id.replaceAll("_"," ")}</strong><span>{c.status.replaceAll("_"," ")}</span></div>)}</div></>}
    </article>
   </div>
+  <article className="evidence-card" style={{marginTop:12}} aria-label="MTA Kafka consumed observations">
+    <div className="evidence-title"><Database size={21}/><h3>MTA Kafka consumed observations</h3></div>
+    {mta.state==="loading"?<p role="status">Checking the local MTA aggregate store...</p>:mta.state==="unauthorized"?<p>Sign in to access MTA observations.</p>:mta.state==="error"?<p role="alert">MTA observations unavailable: {mta.message}</p>:mta.data&&<>
+      <p><strong>{mta.data.count} stored observation(s)</strong> • development-only snapshot • not a continuous live feed</p>
+      {mta.data.observations.length===0?<p>No consumed aggregate observations yet.</p>:<div className="evidence-rows">
+        {mta.data.observations.map(o=><div key={o.event_id}><strong>{o.feed_id.toUpperCase()} • {o.provider_timestamp_utc}</strong><span>{o.entities.toLocaleString()} entities • {o.trip_updates.toLocaleString()} trip updates • {o.vehicle_positions.toLocaleString()} vehicles • {o.alerts.toLocaleString()} alerts • observed {Math.round(o.observation_age_seconds/60).toLocaleString()} min ago</span></div>)}
+      </div>}
+      <small>{mta.data.caveat||"One-shot local aggregate only. No live streaming status is implied."}</small>
+    </>}
+  </article>
   <article className="evidence-card" style={{marginTop:12}} aria-label="NYC TLC historical quality monitoring">
    <div className="evidence-title"><ShieldCheck size={21}/><h3>NYC TLC historical quality monitoring</h3></div>
    {quality.state==="loading"?<p role="status">Checking historical quality evidence...</p>:quality.state==="unauthorized"?<p>Sign in for quality monitoring.</p>:quality.state==="error"?<p role="alert">Quality evidence unavailable: {quality.message}. No unverified metrics will be shown.</p>:quality.data&&<>
