@@ -164,5 +164,45 @@ class BrowserAcceptanceTests(unittest.TestCase):
                                  view + " has horizontal document overflow at 390px: " + str(overflow))
 
 
+    def test_10_real_reporting_explorer_filters_with_mocked_authenticated_response(self):
+        """Browser test explicitly uses synthetic API fixture, not actual user records."""
+        import json
+        fake={
+            "tenant_id":"browser-test-tenant","source_month":"2024-01",
+            "source_sha256":"a"*64,"validated_source_rows":14,
+            "silver_rows":12,"quarantined_rows":2,
+            "in_month_trip_count":10,"outside_month_trip_count":2,
+            "in_month_days":2,"outside_month_days":1,
+            "daily":[
+                {"date":"2024-01-01","trip_count":4,"trip_distance_sum":6,"total_amount_sum":50,"within_source_month":True},
+                {"date":"2024-01-02","trip_count":6,"trip_distance_sum":8,"total_amount_sum":70,"within_source_month":True},
+                {"date":"2024-02-01","trip_count":2,"trip_distance_sum":3,"total_amount_sum":20,"within_source_month":False},
+            ],"caveat":"SYNTHETIC BROWSER TEST DATA ONLY"
+        }
+        self.page.route("**/api/portal/nyc-tlc/reporting",lambda route:route.fulfill(status=200,content_type="application/json",body=json.dumps(fake)))
+        page=self.open("historical")
+        explorer=page.locator(".tlc-explorer")
+        explorer.wait_for(timeout=15000)
+        self.assertIn("10",explorer.locator(".tlc-kpis").inner_text())
+        self.assertEqual(explorer.locator(".tlc-table tbody tr").count(),2)
+        explorer.get_by_label("Historical from date").fill("2024-01-02")
+        self.assertEqual(explorer.locator(".tlc-table tbody tr").count(),1)
+        self.assertIn("6",explorer.locator(".tlc-kpis").inner_text())
+        explorer.get_by_label("Historical metric").select_option("total_amount_sum")
+        self.assertIn("trip total",explorer.locator(".tlc-chart").get_attribute("aria-label").lower())
+        explorer.get_by_role("button",name="Reset filters").click()
+        explorer.get_by_label("Include outside-month dates").check()
+        explorer.get_by_label("Historical to date").fill("2024-02-02")
+        self.assertEqual(explorer.locator(".tlc-table tbody tr").count(),3)
+        self.assertIn("Outside January",explorer.locator(".tlc-table").inner_text())
+        self.assertIn("12",explorer.locator(".tlc-kpis").inner_text())
+
+    def test_11_historical_reporting_no_session_shows_unavailable(self):
+        page=self.open("historical")
+        panel=page.locator('[aria-label="Local NYC TLC Gold reporting"]')
+        panel.wait_for(timeout=15000)
+        page.get_by_text("Sign in to access historical reporting.").wait_for(timeout=15000)
+        self.assertEqual(panel.locator(".tlc-explorer").count(),0)
+
 if __name__ == "__main__":
     unittest.main()

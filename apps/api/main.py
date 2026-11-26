@@ -8,6 +8,7 @@ from data import read_events, summarize_events
 from source_registry import catalog as get_catalog, readiness as get_readiness
 from tlc_manifest import available_downloads
 from tlc_reporting import read_preview
+from tlc_quality import quality_evidence
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
@@ -117,3 +118,12 @@ def nyc_tlc_reporting(user: dict = Depends(require_permission("catalog:read"))):
         return {"tenant_id": tenant, **snapshot}
     except (OSError, ValueError, TypeError, KeyError) as exc:
         raise HTTPException(status_code=503, detail="Local historical reporting evidence unavailable") from exc
+
+@app.get("/api/v1/nyc-tlc/quality")
+def nyc_tlc_quality(user: dict = Depends(require_permission("quality:read"))):
+    tenant = require_tenant(user)
+    try:
+        evidence = quality_evidence(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev"))
+        return {"tenant_id": tenant, **evidence}
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=503, detail="Local historical quality evidence unavailable") from exc

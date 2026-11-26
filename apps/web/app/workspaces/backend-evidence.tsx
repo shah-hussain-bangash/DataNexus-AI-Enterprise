@@ -8,6 +8,7 @@ type Source={id:string;name:string;historical:string;latest:string;historical_st
 type Catalog={tenant_id:string;environment:string;sources:Source[]};
 type Bronze={tenant_id:string;source:string;state:string;downloads:{period:string;file_name:string;bytes:number;sha256:string;stage:string;schema_validated:boolean;row_count:null}[];caveat:string};
 type GoldReport={tenant_id:string;source_month:string;source_sha256:string;validated_source_rows:number;silver_rows:number;quarantined_rows:number;in_month_trip_count:number;outside_month_trip_count:number;in_month_days:number;outside_month_days:number;daily:{date:string;trip_count:number;trip_distance_sum:number;total_amount_sum:number;within_source_month:boolean}[];caveat:string};
+type QualityEvidence={tenant_id:string;state:string;source_month:string;accepted_percent:number;quarantined_percent:number;source_records:number;silver_records:number;quarantined_records:number;out_of_month_trips:number;report_age_hours:number;report_age_band:string;validation_warning_counts:Record<string,number>;transformation_rejection_reasons:Record<string,number>;reconciliation_ok:boolean;production_approved:boolean;validation_completed_at_utc:string;report_generated_at_utc:string;live_source_freshness:null;caveat:string};
 type Readiness={tenant_id:string;release_status:string;approved_controls:number;required_controls:number;controls:{id:string;status:string}[]};
 type Load<T>={state:"loading"|"ready"|"unauthorized"|"error";data?:T;message?:string};
 export default function BackendEvidence(){
@@ -15,6 +16,7 @@ export default function BackendEvidence(){
  const [readiness,setReadiness]=useState<Load<Readiness>>({state:"loading"});
  const [bronze,setBronze]=useState<Load<Bronze>>({state:"loading"});
  const [gold,setGold]=useState<Load<GoldReport>>({state:"loading"});
+ const [quality,setQuality]=useState<Load<QualityEvidence>>({state:"loading"});
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
   let live=true;
@@ -29,11 +31,12 @@ export default function BackendEvidence(){
     if(live)setter({state:"error",message:"Cannot reach backend API"});
    }
   }
-  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});
+  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});
   void load<Catalog>("catalog",setCatalog);
   void load<Readiness>("readiness",setReadiness);
   void load<Bronze>("nyc-tlc/bronze",setBronze);
   void load<GoldReport>("nyc-tlc/reporting",setGold);
+  void load<QualityEvidence>("nyc-tlc/quality",setQuality);
   return()=>{live=false};
  },[refresh]);
  return <section className="evidence-root" aria-label="Authenticated enterprise backend readiness">
@@ -46,6 +49,24 @@ export default function BackendEvidence(){
     {readiness.state==="loading"?<p role="status">Loading release-readiness evidence...</p>:readiness.state==="unauthorized"?<div className="evidence-alert"><LockKeyhole size={18}/> Sign in to view tenant release-readiness status.</div>:readiness.state==="error"?<div className="evidence-alert"><AlertTriangle size={18}/>{readiness.message}</div>:<><div className="evidence-count">{readiness.data?.approved_controls} / {readiness.data?.required_controls}<span>Approved controls — {readiness.data?.release_status}</span></div><div className="evidence-rows">{readiness.data?.controls.map(c=><div key={c.id}><strong>{c.id.replaceAll("_"," ")}</strong><span>{c.status.replaceAll("_"," ")}</span></div>)}</div></>}
    </article>
   </div>
+  <article className="evidence-card" style={{marginTop:12}} aria-label="NYC TLC historical quality monitoring">
+   <div className="evidence-title"><ShieldCheck size={21}/><h3>NYC TLC historical quality monitoring</h3></div>
+   {quality.state==="loading"?<p role="status">Checking historical quality evidence...</p>:quality.state==="unauthorized"?<p>Sign in for quality monitoring.</p>:quality.state==="error"?<p role="alert">Quality evidence unavailable: {quality.message}. No unverified metrics will be shown.</p>:quality.data&&<>
+    <p><strong>{quality.data.reconciliation_ok?"Source / Silver / quarantine counts reconcile":"Reconciliation not verified"}</strong> • {quality.data.source_month} • development-only</p>
+    <div className="tlc-quality-kpis">
+      <div><small>Accepted</small><strong>{quality.data.accepted_percent.toFixed(2)}%</strong></div>
+      <div><small>Quarantined</small><strong>{quality.data.quarantined_percent.toFixed(2)}%</strong></div>
+      <div><small>Outside-month trips</small><strong>{quality.data.out_of_month_trips.toLocaleString()}</strong></div>
+      <div><small>Report age</small><strong>{quality.data.report_age_hours.toLocaleString()} hours</strong></div>
+    </div>
+    <p>Report age is elapsed time since the local historical export. <strong>It does not indicate live-feed freshness.</strong> {quality.data.report_age_band==="over_168_hours"?"Local export is over seven days old.":""}</p>
+    <div className="evidence-grid">
+     <div><h4>Validation warnings (overlapping)</h4><div className="evidence-rows">{Object.entries(quality.data.validation_warning_counts).map(([name,count])=><div key={name}><strong>{name.replaceAll("_"," ")}</strong><span>{count.toLocaleString()}</span></div>)}</div></div>
+     <div><h4>Transformation rejection reasons (overlapping)</h4><div className="evidence-rows">{Object.entries(quality.data.transformation_rejection_reasons).map(([name,count])=><div key={name}><strong>{name.replaceAll("_"," ")}</strong><span>{count.toLocaleString()}</span></div>)}</div></div>
+    </div>
+    <small>{quality.data.caveat}</small>
+   </>}
+  </article>
   <article className="evidence-card" style={{marginTop:12}} aria-label="Local NYC TLC Gold reporting"><div className="evidence-title"><Database size={21}/><h3>Local NYC TLC Gold reporting</h3></div>
    {gold.state==="loading"?<p role="status">Loading verified local daily aggregates...</p>:gold.state==="unauthorized"?<p>Sign in to access historical reporting.</p>:gold.state==="error"?<p>Historical reporting unavailable: {gold.message}. Run Phase 2.3 local export before viewing analytics.</p>:<><p><strong>Historical snapshot {gold.data?.source_month}</strong> • development-only, not a live source</p><div className="nx-health">
      {([["Validated source trips",gold.data?.validated_source_rows],["Accepted Silver trips",gold.data?.silver_rows],["Quarantined trips",gold.data?.quarantined_rows],["In-month trips",gold.data?.in_month_trip_count],["Outside-month trips",gold.data?.outside_month_trip_count]] as [string,number|undefined][]).map(([name,value])=><div key={name}><small>{name}</small><strong>{value===undefined?"—":value.toLocaleString()}</strong></div>)}
