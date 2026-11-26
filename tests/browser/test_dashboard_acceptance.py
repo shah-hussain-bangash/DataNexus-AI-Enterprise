@@ -120,5 +120,47 @@ class BrowserAcceptanceTests(unittest.TestCase):
         self.assertTrue(page.get_by_role("heading", name="76 implementation and verification tasks").is_visible())
 
 
+    def test_07_original_aviation_and_property_routes(self):
+        for route in ("/", "/dubai-property"):
+            response = self.page.goto(BASE + route, wait_until="domcontentloaded", timeout=30000)
+            self.assertIsNotNone(response)
+            self.assertEqual(response.status, 200)
+            self.page.locator("body").wait_for()
+            self.assertTrue(self.page.locator("main").count() >= 1, route + " needs a main landmark")
+            self.assertGreater(len(self.page.locator("body").inner_text().strip()), 80)
+
+    def test_08_palette_focus_trap_and_restoration(self):
+        page = self.open("experience")
+        trigger = page.locator(".ex-actionbar button").first
+        trigger.focus()
+        trigger.click()
+        dialog = page.get_by_role("dialog", name="Dashboard command palette")
+        dialog.wait_for()
+        search = dialog.get_by_role("textbox", name="Search dashboard destinations")
+        self.assertTrue(search.evaluate("(el) => document.activeElement === el"))
+        close = dialog.get_by_role("button", name="Close command palette")
+        close.focus()
+        page.keyboard.press("Tab")
+        self.assertTrue(search.evaluate("(el) => document.activeElement === el"), "Tab should wrap to first command palette control")
+        page.keyboard.press("Shift+Tab")
+        self.assertTrue(close.evaluate("(el) => document.activeElement === el"), "Shift+Tab should wrap back to final control")
+        page.keyboard.press("Escape")
+        self.assertEqual(dialog.count(), 0)
+        self.assertTrue(trigger.evaluate("(el) => document.activeElement === el"), "Focus must return to opening control")
+
+    def test_09_mobile_horizontal_reflow_of_roadmap_and_studios(self):
+        self.context.close()
+        self.context = self.browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+        self.page = self.context.new_page()
+        self.errors = []
+        self.page.on("pageerror", lambda exc: self.errors.append(str(exc)))
+        for view in ("implementation", "capabilities", "experience", "powerbi-studio", "ai-studio", "security-studio", "operations-studio"):
+            page = self.open(view)
+            page.locator(".nx-main").wait_for()
+            overflow = page.evaluate("() => ({width: document.documentElement.clientWidth, content: document.documentElement.scrollWidth})")
+            self.assertLessEqual(overflow["content"], overflow["width"] + 2,
+                                 view + " has horizontal document overflow at 390px: " + str(overflow))
+
+
 if __name__ == "__main__":
     unittest.main()
