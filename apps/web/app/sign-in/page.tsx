@@ -36,7 +36,7 @@ export default function SignIn() {
       <div className="signin-image-credit">Illustrative airport photography: <a target="_blank" rel="noreferrer" href="https://commons.wikimedia.org/wiki/File:A2613-Dubai_Airport-Emirates2.jpg">A2613 (CC BY-SA 4.0)</a> · <a target="_blank" rel="noreferrer" href="https://commons.wikimedia.org/wiki/File:Dubai_Airport_overview.jpg">Umair Shaikh (CC BY-SA 2.0)</a> · No airline affiliation</div>
       <div className="signin-orbit one"/><div className="signin-orbit two"/><div className="signin-orbit three"/>
     </section>
-    <section className="signin-form-side">
+    <main className="signin-form-side" id="main-content">
       <div className="signin-top"><span className="signin-local"><span/> LOCAL DEVELOPMENT</span><span>Phase 3A.2</span></div>
       <div className="signin-card"><div className="signin-secure"><LockKeyhole size={23}/></div><div className="signin-heading-label">WELCOME BACK · LOCAL DEVELOPMENT</div><h2>Sign in to DataNexus</h2><p>Access your aviation intelligence command center.</p>
       <form onSubmit={submit}>
@@ -49,6 +49,6 @@ export default function SignIn() {
       </form>
       <div className="signin-notice"><CheckCircle2 size={17}/><span>Protected local session with PostgreSQL authentication auditing when enabled. Enterprise SSO, MFA and RBAC are not yet implemented.</span></div></div>
       <div className="signin-help">Need to configure access? Run <code>python scripts/create_portal_env.py</code> from the repository.</div>
-    </section>
+    </main>
   </div>;
 }
