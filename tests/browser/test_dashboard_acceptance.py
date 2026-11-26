@@ -125,7 +125,9 @@ class BrowserAcceptanceTests(unittest.TestCase):
             response = self.page.goto(BASE + route, wait_until="domcontentloaded", timeout=30000)
             self.assertIsNotNone(response)
             self.assertEqual(response.status, 200)
-            self.page.locator("body").wait_for()
+            self.page.locator("main").first.wait_for(timeout=15000)
+            if route == "/" and "/sign-in" in self.page.url:
+                self.assertTrue(self.page.get_by_role("heading", name="Sign in to DataNexus").is_visible(), "Unauthenticated aviation route should redirect to sign-in")
             self.assertTrue(self.page.locator("main").count() >= 1, route + " needs a main landmark")
             self.assertGreater(len(self.page.locator("body").inner_text().strip()), 80)
 
@@ -138,12 +140,12 @@ class BrowserAcceptanceTests(unittest.TestCase):
         dialog.wait_for()
         search = dialog.get_by_role("textbox", name="Search dashboard destinations")
         self.assertTrue(search.evaluate("(el) => document.activeElement === el"))
-        close = dialog.get_by_role("button", name="Close command palette")
-        close.focus()
+        last = dialog.locator(".ex-command-results button").last
+        last.focus()
         page.keyboard.press("Tab")
         self.assertTrue(search.evaluate("(el) => document.activeElement === el"), "Tab should wrap to first command palette control")
         page.keyboard.press("Shift+Tab")
-        self.assertTrue(close.evaluate("(el) => document.activeElement === el"), "Shift+Tab should wrap back to final control")
+        self.assertTrue(last.evaluate("(el) => document.activeElement === el"), "Shift+Tab should wrap back to final control")
         page.keyboard.press("Escape")
         self.assertEqual(dialog.count(), 0)
         self.assertTrue(trigger.evaluate("(el) => document.activeElement === el"), "Focus must return to opening control")
