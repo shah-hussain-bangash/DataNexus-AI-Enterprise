@@ -7,6 +7,7 @@ from authorization import require_permission, require_tenant
 from data import read_events, summarize_events
 from source_registry import catalog as get_catalog, readiness as get_readiness
 from tlc_manifest import available_downloads
+from tlc_reporting import read_preview
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
@@ -107,3 +108,12 @@ def nyc_tlc_bronze(user: dict = Depends(require_permission("catalog:read"))):
     return {"tenant_id":tenant,"source":"nyc_tlc_yellow_taxi","state":"local_bronze_inventory_only",
             "downloads":available_downloads(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")),
             "caveat":"Raw checksummed Parquet is NOT validated row data, Gold analytics or live data."}
+
+@app.get("/api/v1/nyc-tlc/reporting")
+def nyc_tlc_reporting(user: dict = Depends(require_permission("catalog:read"))):
+    tenant = require_tenant(user)
+    try:
+        snapshot = read_preview(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev"))
+        return {"tenant_id": tenant, **snapshot}
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=503, detail="Local historical reporting evidence unavailable") from exc
