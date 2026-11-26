@@ -1,6 +1,7 @@
 """Bounded read-only local MTA aggregate observations (not a live feed)."""
 import re
 import sqlite3
+from contextlib import closing
 from datetime import datetime,timezone
 from pathlib import Path
 
@@ -12,7 +13,7 @@ def read_mta_observations(data_root,limit=20):
     path=(Path(data_root).resolve()/"mta"/"mta_aggregate.sqlite3")
     if not path.is_file() or path.is_symlink():
         raise FileNotFoundError("Local MTA aggregate store unavailable")
-    with sqlite3.connect(path.as_uri()+"?mode=ro",uri=True,timeout=3) as db:
+    with closing(sqlite3.connect(path.as_uri()+"?mode=ro",uri=True,timeout=3)) as db:
         db.row_factory=sqlite3.Row
         # Only predeclared fixed columns; never expose raw trip or vehicle identifiers.
         rows=db.execute("""SELECT event_id,provider_timestamp_utc,observed_at_utc,feed_id,
