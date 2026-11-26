@@ -20,7 +20,7 @@ class TLCHistoricalValidationTests(unittest.TestCase):
    source.write_bytes(raw)
    valid={"source":"nyc_tlc_yellow_taxi","file_name":source.name,"stage":"bronze_downloaded_unvalidated","bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest()}
    module._validate_identity(source,valid)
-   with self.assertRaisesRegex(ValueError,"checksum"):
+   with self.assertRaisesRegex(ValueError,"SHA-256 does not match acquisition manifest"):
     module._validate_identity(source,{**valid,"sha256":"0"*64})
    with self.assertRaisesRegex(ValueError,"size"):
     module._validate_identity(source,{**valid,"bytes":len(raw)+1})
