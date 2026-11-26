@@ -91,7 +91,7 @@ class BrowserAcceptanceTests(unittest.TestCase):
     def test_04_ux_enhancement_navigation_and_keyboard_command(self):
         page = self.open("experience")
         page.get_by_role("heading", name="Dashboard experience studio").wait_for()
-        page.get_by_role("button", name="Notification center", exact=True).click()
+        page.locator(".ex-menu").get_by_role("button", name="Notification center").click()
         self.assertIn("Preview notification inbox", page.locator(".ex-main").inner_text())
         page.keyboard.press("Control+k")
         page.get_by_role("dialog", name="Dashboard command palette").wait_for()
@@ -115,7 +115,7 @@ class BrowserAcceptanceTests(unittest.TestCase):
         page = self.open("implementation")
         page.get_by_role("button", name="Open menu").click()
         self.assertIn("open", page.locator(".nx-sidebar").get_attribute("class"))
-        page.get_by_role("button", name="Close menu").click()
+        page.get_by_role("button", name="Close navigation menu").click()
         self.assertNotIn("open", page.locator(".nx-sidebar").get_attribute("class"))
         self.assertTrue(page.get_by_role("heading", name="76 implementation and verification tasks").is_visible())
 
