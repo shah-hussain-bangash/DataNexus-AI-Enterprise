@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {Bell,BookOpen,Check,ChevronRight,Command,Download,Filter,Layers3,LayoutDashboard,Link2,Moon,Palette,Search,ShieldCheck,Sun,UserCog,X} from "lucide-react";
 import {capabilityGroups} from "./capability-data";
 
@@ -38,6 +38,8 @@ export default function ExperienceExtensions({domain,onGo}:Props){
  const [commandOpen,setCommandOpen]=useState(false);
  const [cmd,setCmd]=useState("");
  const [focusMode,setFocusMode]=useState(false);
+ const commandRef=useRef<HTMLDivElement>(null);
+ const previousFocus=useRef<HTMLElement|null>(null);
  const commands=useMemo(()=>routes.filter(([title])=>title.toLowerCase().includes(cmd.toLowerCase().trim())).slice(0,9),[cmd]);
  useEffect(()=>{
    try{
@@ -52,6 +54,22 @@ export default function ExperienceExtensions({domain,onGo}:Props){
   };
   window.addEventListener("keydown",keyboard);return()=>window.removeEventListener("keydown",keyboard);
  },[]);
+ useEffect(()=>{
+  if(!commandOpen)return;
+  previousFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  const dialog=commandRef.current;
+  dialog?.querySelector<HTMLInputElement>('input[aria-label="Search dashboard destinations"]')?.focus();
+  const trap=(event:KeyboardEvent)=>{
+   if(event.key!=="Tab"||!dialog)return;
+   const controls=Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled])')).filter(el=>el.getClientRects().length>0);
+   if(!controls.length)return;
+   const first=controls[0],last=controls[controls.length-1];
+   if(event.shiftKey&&(document.activeElement===first||!dialog.contains(document.activeElement))){event.preventDefault();last.focus();}
+   else if(!event.shiftKey&&(document.activeElement===last||!dialog.contains(document.activeElement))){event.preventDefault();first.focus();}
+  };
+  document.addEventListener("keydown",trap);
+  return ()=>{document.removeEventListener("keydown",trap);previousFocus.current?.focus();};
+ },[commandOpen]);
  const toggleWidget=(name:string)=>{setEdited(true);setSaved(false);setWidgets(w=>w.includes(name)?w.filter(x=>x!==name):[...w,name])};
  const saveLayout=()=>{try{window.localStorage.setItem("datanexus.layout.preview.v1",JSON.stringify(widgets));setSaved(true);setEdited(false);}catch{setSaved(false)}};
  const reset=()=>{setWidgets(starterWidgets);setEdited(true);setSaved(false)};
@@ -75,6 +93,6 @@ export default function ExperienceExtensions({domain,onGo}:Props){
     {area==="Accessibility lab"&&<><Surface title="Accessibility design checklist"><p>These checks are UI review targets, not completed accessibility certifications.</p>{["Keyboard-only navigation and predictable focus","Screen-reader landmarks, roles and names","Text resizing and responsive reflow","Contrast ratios and visible error messaging","Reduced-motion and non-color status cues","Accessible tables, forms, dialogs and empty states"].map(x=><div className="ex-permission" key={x}><span>{x}</span><Pill>Unverified</Pill></div>)}<div className="ex-actions"><button onClick={()=>setCommandOpen(true)}>Test keyboard command interface</button></div></Surface></>}
    </div>
   </div>
-  {commandOpen&&<div className="ex-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setCommandOpen(false)}}><div role="dialog" aria-modal="true" aria-label="Dashboard command palette" className="ex-command"><div className="ex-command-header"><Command size={18}/><input autoFocus aria-label="Search dashboard destinations" value={cmd} onChange={e=>setCmd(e.target.value)} placeholder="Search dashboard destinations..."/><button onClick={()=>setCommandOpen(false)} aria-label="Close command palette"><X size={16}/></button></div><div className="ex-command-results">{commands.length?commands.map(([label,mode])=><button key={mode} onClick={()=>selectRoute(mode)}><Search size={15}/>{label}<ChevronRight size={14}/></button>):<p>No destinations found</p>}</div><p>Keyboard: Ctrl/Cmd + K to open · Esc to close</p></div></div>}
+  {commandOpen&&<div className="ex-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setCommandOpen(false)}}><div ref={commandRef} role="dialog" aria-modal="true" aria-label="Dashboard command palette" className="ex-command"><div className="ex-command-header"><Command size={18}/><input autoFocus aria-label="Search dashboard destinations" value={cmd} onChange={e=>setCmd(e.target.value)} placeholder="Search dashboard destinations..."/><button onClick={()=>setCommandOpen(false)} aria-label="Close command palette"><X size={16}/></button></div><div className="ex-command-results">{commands.length?commands.map(([label,mode])=><button key={mode} onClick={()=>selectRoute(mode)}><Search size={15}/>{label}<ChevronRight size={14}/></button>):<p>No destinations found</p>}</div><p>Keyboard: Ctrl/Cmd + K to open · Esc to close</p></div></div>}
  </section>;
 }
