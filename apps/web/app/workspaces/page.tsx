@@ -6,6 +6,7 @@ import "./workspaces.css";
 import "./studio.css";
 import "./finishing.css";
 import "./backend-evidence.css";
+import "./historical-gold-explorer.css";
 import "./capability-studio.css";
 import "./advanced-enterprise.css";
 import "./experience-extensions.css";

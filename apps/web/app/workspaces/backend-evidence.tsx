@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
+import HistoricalGoldExplorer from "./historical-gold-explorer";
 import {Database,ShieldCheck,RefreshCw,AlertTriangle,LockKeyhole} from "lucide-react";
 
 type Source={id:string;name:string;historical:string;latest:string;historical_state:string;latest_state:string;approved_snapshot:string|null;verified_rows:number|null};
@@ -49,6 +50,7 @@ export default function BackendEvidence(){
    {gold.state==="loading"?<p role="status">Loading verified local daily aggregates...</p>:gold.state==="unauthorized"?<p>Sign in to access historical reporting.</p>:gold.state==="error"?<p>Historical reporting unavailable: {gold.message}. Run Phase 2.3 local export before viewing analytics.</p>:<><p><strong>Historical snapshot {gold.data?.source_month}</strong> • development-only, not a live source</p><div className="nx-health">
      {([["Validated source trips",gold.data?.validated_source_rows],["Accepted Silver trips",gold.data?.silver_rows],["Quarantined trips",gold.data?.quarantined_rows],["In-month trips",gold.data?.in_month_trip_count],["Outside-month trips",gold.data?.outside_month_trip_count]] as [string,number|undefined][]).map(([name,value])=><div key={name}><small>{name}</small><strong>{value===undefined?"—":value.toLocaleString()}</strong></div>)}
     </div><p>Verified data lineage: {gold.data?.source_sha256.slice(0,16)}… • {gold.data?.in_month_days} January dates / {gold.data?.outside_month_days} out-of-month dates</p>
+    {gold.data&&<HistoricalGoldExplorer daily={gold.data.daily} sourceMonth={gold.data.source_month}/>}
     <div className="evidence-rows" role="table" aria-label="Real historical daily Gold aggregates"><div role="row"><strong>Pickup date</strong><span>Trips • trip total (USD) • distance</span></div>{gold.data?.daily.map(d=><div role="row" key={d.date}><strong>{d.date}{d.within_source_month?"":" (outside January)"}</strong><span>{d.trip_count.toLocaleString()} trips • ${d.total_amount_sum.toLocaleString()} • {d.trip_distance_sum.toLocaleString()} mi</span></div>)}</div><small>{gold.data?.caveat}</small></>}
   </article>
   <article className="evidence-card" style={{marginTop:12}}><div className="evidence-title"><Database size={21}/><h3>NYC TLC — local historical acquisition</h3></div>
