@@ -53,5 +53,5 @@ class LocalReportingTests(unittest.TestCase):
    self.assertEqual(api.read_preview(Path(d))["silver_rows"],3)
    with self.assertRaises(FileExistsError):publisher.build_snapshot(root)
    (root/"transform_manifest.json").write_text('{"stage":"tampered"}')
-   with self.assertRaisesRegex(ValueError,"modified"):
+   with self.assertRaisesRegex(ValueError,"Unapproved reporting source state"):
     api.read_preview(d)
