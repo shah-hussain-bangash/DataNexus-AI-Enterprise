@@ -23,3 +23,7 @@ python dashboards/powerbi/Update_DataNexus_Overview.py --repo "$root" --output (
 Then open `dashboards/powerbi/DataNexus_EndToEnd.pbip` and refresh. `EnergyHourly` remains empty and energy `DomainCoverage` remains not connected until your local EIA download and validation succeed.
 
 The Python code must not log the authenticated URL or key. The manifest contains only a public, key-free query. No automatic live subscription or production release approval is implied. The release gate remains BLOCKED 0/16.
+
+## Safe HTTP diagnostics
+
+EIA registration keys must never appear in shared console logs. If a key was exposed in a copied PowerShell transcript, contact EIA to revoke/reissue it before further tests. The collector prints only an HTTP status and a strictly sanitized provider error code, if available. It never prints the full request URL, key, response message, or body. `HTTP 403 / API_KEY_INVALID` indicates key rejection; `HTTP 429` indicates a possible quota/rate limit; a network/TLS failure is reported without sensitive connection details. If the current response is still a network/TLS error, verify outbound access and EIA service availability separately.

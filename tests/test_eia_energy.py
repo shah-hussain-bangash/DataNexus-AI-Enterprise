@@ -1,5 +1,5 @@
 """No-network EIA v2 hourly demand connector safety and Power BI contracts."""
-import io,json,sys,tempfile,unittest
+import io,json,sys,tempfile,unittest,urllib.error
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
@@ -47,6 +47,17 @@ class EnergyTests(unittest.TestCase):
    snapshot=next(x for x in f.glob("eia-us48-hourly-demand-*.json") if ".manifest." not in x.name)
    snapshot.write_text("[]")
    with self.assertRaises(ValueError):eia.load(f)
+ def test_http_error_code_safe_and_no_secret(self):
+  err=urllib.error.HTTPError("https://api.eia.gov/?api_key=test-secret-key",403,"Forbidden",{},io.BytesIO(json.dumps({"error":{"code":"API_KEY_INVALID","message":"test-secret-key"}}).encode()))
+  text=eia.safe_eia_http_error(err)
+  self.assertIn("HTTP 403",text)
+  self.assertIn("API_KEY_INVALID",text)
+  self.assertNotIn("test-secret-key",text)
+ def test_untrusted_provider_code_suppressed(self):
+  err=urllib.error.HTTPError("https://api.eia.gov/?api_key=test-secret-key",429,"Rate",{},io.BytesIO(json.dumps({"error":{"code":"SECRET key! bad"}}).encode()))
+  text=eia.safe_eia_http_error(err)
+  self.assertIn("provider_code=UNAVAILABLE",text)
+  self.assertNotIn("SECRET",text)
  def test_powerbi_contract(self):
   exporter=(ROOT/"dashboards/powerbi/Update_DataNexus_Overview.py").read_text()
   model=(ROOT/"dashboards/powerbi/DataNexus_EndToEnd.SemanticModel/definition/model.tmdl").read_text()

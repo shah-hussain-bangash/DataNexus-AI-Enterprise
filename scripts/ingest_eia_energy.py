@@ -3,7 +3,7 @@
 EIA_API_KEY environment variable required only for --execute. Never record
 or print API credentials, complete authenticated URLs, or provider raw data.
 """
-import argparse,hashlib,json,math,os,urllib.parse,urllib.request
+import argparse,hashlib,json,math,os,urllib.parse,urllib.request,urllib.error
 from datetime import datetime,timezone,date
 from pathlib import Path
 
@@ -61,6 +61,21 @@ def normalize(payload,start,end):
             "series_type":SERIES})
     return sorted(out,key=lambda r:r["period_utc"])
 
+def safe_eia_http_error(exc):
+    """Only report HTTP status and EIA's alphanumeric error code; never URL/body."""
+    status=getattr(exc,"code",None)
+    try:
+        body=exc.read(4096)
+        data=json.loads(body)
+        error=data.get("error") if isinstance(data,dict) else None
+        code=error.get("code") if isinstance(error,dict) else data.get("code") if isinstance(data,dict) else None
+    except Exception:
+        code=None
+    if not isinstance(code,str) or len(code)>80 or not all(c.isascii() and (c.isalnum() or c=="_") for c in code):
+        code="UNAVAILABLE"
+    if type(status) is not int or not 100<=status<=599:status="UNKNOWN"
+    return f"EIA request rejected (HTTP {status}; provider_code={code}; credential and URL hidden)"
+
 def fetch(start,end,folder=ROOT,opener=None,key=None):
     parameters=query_params(start,end)
     credential=key if key is not None else os.getenv("EIA_API_KEY")
@@ -75,9 +90,11 @@ def fetch(start,end,folder=ROOT,opener=None,key=None):
     try:
         with (opener or urllib.request.urlopen)(request,timeout=30) as response:
             raw=response.read(3_000_001)
-    except Exception as exc:
-        # Never include urllib HTTPError's URL, because it contains the EIA key.
-        raise RuntimeError("EIA request failed; check API key, endpoint and network (URL hidden)") from None
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(safe_eia_http_error(exc)) from None
+    except Exception:
+        # urllib errors can include a URL with the key: do not stringify them.
+        raise RuntimeError("EIA network or TLS failure (URL and credential hidden)") from None
     if len(raw)>3_000_000:raise ValueError("Oversized EIA response")
     rows=normalize(json.loads(raw),start,end)
     meta={"source":"EIA hourly electric grid demand","respondent":RESPONDENT,
