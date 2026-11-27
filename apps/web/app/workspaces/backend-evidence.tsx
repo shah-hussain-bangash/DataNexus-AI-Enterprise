@@ -11,6 +11,7 @@ type GoldReport={tenant_id:string;source_month:string;source_sha256:string;valid
 type QualityEvidence={tenant_id:string;state:string;source_month:string;accepted_percent:number;quarantined_percent:number;source_records:number;silver_records:number;quarantined_records:number;out_of_month_trips:number;report_age_hours:number;report_age_band:string;validation_warning_counts:Record<string,number>;transformation_rejection_reasons:Record<string,number>;reconciliation_ok:boolean;production_approved:boolean;validation_completed_at_utc:string;report_generated_at_utc:string;live_source_freshness:null;caveat:string};
 type MtaObservation={event_id:string;feed_id:string;provider_timestamp_utc:string;observation_age_seconds:number;entities:number;trip_updates:number;vehicle_positions:number;alerts:number};
 type MtaResponse={tenant_id:string;state:string;count:number;observations:MtaObservation[];live_stream_connected:boolean;production_approved:boolean;caveat?:string};
+type MtaMonitor={tenant_id:string;state:string;checked_at_utc:string;consumer_lag_messages:number|null;offset_state:string;stored_aggregate_records:number;latest_stored_source_age_seconds:number;snapshot_age_seconds:number;snapshot_stale:boolean;caveat:string};
 type Readiness={tenant_id:string;release_status:string;approved_controls:number;required_controls:number;controls:{id:string;status:string}[]};
 type Load<T>={state:"loading"|"ready"|"unauthorized"|"error";data?:T;message?:string};
 export default function BackendEvidence(){
@@ -20,6 +21,7 @@ export default function BackendEvidence(){
  const [gold,setGold]=useState<Load<GoldReport>>({state:"loading"});
  const [quality,setQuality]=useState<Load<QualityEvidence>>({state:"loading"});
  const [mta,setMta]=useState<Load<MtaResponse>>({state:"loading"});
+ const [monitor,setMonitor]=useState<Load<MtaMonitor>>({state:"loading"});
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
   let live=true;
@@ -34,13 +36,14 @@ export default function BackendEvidence(){
     if(live)setter({state:"error",message:"Cannot reach backend API"});
    }
   }
-  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});
+  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});
   void load<Catalog>("catalog",setCatalog);
   void load<Readiness>("readiness",setReadiness);
   void load<Bronze>("nyc-tlc/bronze",setBronze);
   void load<GoldReport>("nyc-tlc/reporting",setGold);
   void load<QualityEvidence>("nyc-tlc/quality",setQuality);
   void load<MtaResponse>("mta/observations",setMta);
+  void load<MtaMonitor>("mta/monitor",setMonitor);
   return()=>{live=false};
  },[refresh]);
  return <section className="evidence-root" aria-label="Authenticated enterprise backend readiness">
@@ -53,6 +56,19 @@ export default function BackendEvidence(){
     {readiness.state==="loading"?<p role="status">Loading release-readiness evidence...</p>:readiness.state==="unauthorized"?<div className="evidence-alert"><LockKeyhole size={18}/> Sign in to view tenant release-readiness status.</div>:readiness.state==="error"?<div className="evidence-alert"><AlertTriangle size={18}/>{readiness.message}</div>:<><div className="evidence-count">{readiness.data?.approved_controls} / {readiness.data?.required_controls}<span>Approved controls — {readiness.data?.release_status}</span></div><div className="evidence-rows">{readiness.data?.controls.map(c=><div key={c.id}><strong>{c.id.replaceAll("_"," ")}</strong><span>{c.status.replaceAll("_"," ")}</span></div>)}</div></>}
    </article>
   </div>
+  <article className="evidence-card" style={{marginTop:12}} aria-label="MTA local monitoring snapshot">
+    <div className="evidence-title"><ShieldCheck size={21}/><h3>MTA Kafka lag and freshness — local snapshot</h3></div>
+    {monitor.state==="loading"?<p role="status">Checking saved monitoring evidence...</p>:monitor.state==="unauthorized"?<p>Sign in to view monitoring evidence.</p>:monitor.state==="error"?<p role="alert">Monitoring snapshot unavailable: {monitor.message}. Run the read-only monitor with --save locally.</p>:monitor.data&&<>
+      <p><strong>{monitor.data.snapshot_stale?"Stale snapshot":"Recent snapshot"}</strong> • checked {monitor.data.checked_at_utc} • age {Math.round(monitor.data.snapshot_age_seconds/60).toLocaleString()} min</p>
+      <div className="tlc-quality-kpis">
+        <div><small>Kafka consumer lag</small><strong>{monitor.data.consumer_lag_messages===null?"Unknown":monitor.data.consumer_lag_messages.toLocaleString()}</strong></div>
+        <div><small>Stored aggregates</small><strong>{monitor.data.stored_aggregate_records.toLocaleString()}</strong></div>
+        <div><small>Last stored provider age</small><strong>{Math.round(monitor.data.latest_stored_source_age_seconds/60).toLocaleString()} min</strong></div>
+        <div><small>Offset condition</small><strong style={{fontSize:12}}>{monitor.data.offset_state.replaceAll("_"," ")}</strong></div>
+      </div>
+      <small>Saved evidence only; it does not poll Kafka or the MTA from the dashboard. {monitor.data.caveat}</small>
+    </>}
+  </article>
   <article className="evidence-card" style={{marginTop:12}} aria-label="MTA Kafka consumed observations">
     <div className="evidence-title"><Database size={21}/><h3>MTA Kafka consumed observations</h3></div>
     {mta.state==="loading"?<p role="status">Checking the local MTA aggregate store...</p>:mta.state==="unauthorized"?<p>Sign in to access MTA observations.</p>:mta.state==="error"?<p role="alert">MTA observations unavailable: {mta.message}</p>:mta.data&&<>

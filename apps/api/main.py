@@ -11,6 +11,7 @@ from tlc_manifest import available_downloads
 from tlc_reporting import read_preview
 from tlc_quality import quality_evidence
 from mta_observations import read_mta_observations
+from mta_monitor import latest_monitor
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
@@ -138,3 +139,12 @@ def mta_observations(user: dict = Depends(require_permission("quality:read"))):
         return {"tenant_id":tenant, **evidence}
     except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
         raise HTTPException(status_code=503,detail="Local MTA aggregate observations unavailable") from exc
+
+@app.get("/api/v1/mta/monitor")
+def mta_monitor(user: dict = Depends(require_permission("quality:read"))):
+    tenant = require_tenant(user)
+    try:
+        report = latest_monitor(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev"))
+        return {"tenant_id":tenant,**report}
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
+        raise HTTPException(status_code=503,detail="Local MTA monitoring evidence unavailable") from exc
