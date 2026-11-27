@@ -1,0 +1,75 @@
+table Sources
+	lineageTag: 85b794a9-c9b2-4031-ba2f-dbb7c33690f3
+
+	measure 'Feed Count' = COUNTROWS(Sources)
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: c58cdec6-8a11-4439-beb9-88713cc2c828
+
+	column Feed
+		dataType: string
+		lineageTag: 0a51b20d-8450-4962-a036-29d93ae06c7c
+		summarizeBy: none
+		sourceColumn: Feed
+
+	column Domain
+		dataType: string
+		lineageTag: 932d1ddb-e669-4c61-8f88-1553d495a755
+		summarizeBy: none
+		sourceColumn: Domain
+
+	column Mode
+		dataType: string
+		lineageTag: 44da21f3-9d7d-4ac7-87bc-1ba4fb454f75
+		summarizeBy: none
+		sourceColumn: Mode
+
+	column Records
+		dataType: int64
+		formatString: #,0
+		lineageTag: 92d1f590-f503-42e6-aed1-f8aa8ddcd9af
+		summarizeBy: sum
+		sourceColumn: Records
+
+	column Unit
+		dataType: string
+		lineageTag: c9398c3a-bb36-435e-b03d-6788f0ba9bf4
+		summarizeBy: none
+		sourceColumn: Unit
+
+	column 'Observed UTC'
+		dataType: string
+		lineageTag: 34204c9b-f4c6-4ce5-ab06-14c0ca311b78
+		summarizeBy: none
+		sourceColumn: Observed UTC
+
+	column Status
+		dataType: string
+		lineageTag: 6a702958-0bf0-46b7-a035-2e098bcd75b1
+		summarizeBy: none
+		sourceColumn: Status
+
+	column Evidence
+		dataType: string
+		lineageTag: 0bad76f2-a6af-4e79-a650-066cc9fb7d28
+		summarizeBy: none
+		sourceColumn: Evidence
+
+	column Scope
+		dataType: string
+		lineageTag: fcf910c1-ac26-40bc-8025-477760c8a51e
+		summarizeBy: none
+		sourceColumn: Scope
+
+	partition Sources = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[sources]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"Feed", type text}, {"Domain", type text}, {"Mode", type text}, {"Records", Int64.Type}, {"Unit", type text}, {"Observed UTC", type text}, {"Status", type text}, {"Evidence", type text}, {"Scope", type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

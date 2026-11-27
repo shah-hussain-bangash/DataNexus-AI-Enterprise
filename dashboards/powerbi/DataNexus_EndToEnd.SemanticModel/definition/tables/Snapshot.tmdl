@@ -1,0 +1,135 @@
+table Snapshot
+	lineageTag: 27eceef4-0aea-4082-b6d7-4c769f9d6a42
+
+	measure 'Source Rows' = MAX(Snapshot[validated_source_rows])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: ad6f54d0-5b63-40ce-8e33-90e290f00383
+
+	measure 'Accepted Rows' = MAX(Snapshot[silver_rows])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 357711fe-2d58-4e2f-b150-37181b746a07
+
+	measure 'Quarantined Rows' = MAX(Snapshot[quarantined_rows])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 593a24e4-03b3-480e-ab12-d3c10fab1bdf
+
+	measure 'Acceptance Rate' = DIVIDE([Accepted Rows], [Source Rows])
+		formatString: 0.00%
+		displayFolder: Dashboard
+		lineageTag: f4e30f76-c4cf-4221-977d-c03f926778a6
+
+	measure 'Outside Month Trips' = MAX(Snapshot[outside_month_trip_count])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 709dceae-db06-4131-9f3e-1463b2dc2aba
+
+	measure 'January Trips' = MAX(Snapshot[in_month_trip_count])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 590053c6-3acc-4042-8cc4-943ba4a7ca4b
+
+	measure 'Source Snapshot UTC' = MAX(Snapshot[generated_at_utc])
+		formatString: @
+		displayFolder: Dashboard
+		lineageTag: cbd4f87b-d3a2-43f0-977a-8673fa177420
+
+	measure 'Coverage Summary' =
+			"Original rows = accepted + quarantined" & UNICHAR(10) &
+			FORMAT([Source Rows], "#,0") & " = " & FORMAT([Accepted Rows], "#,0") & " + " & FORMAT([Quarantined Rows], "#,0") & UNICHAR(10) & UNICHAR(10) &
+			FORMAT(MAX(Snapshot[in_month_days]), "0") & " dates within the source month." & UNICHAR(10) &
+			FORMAT(MAX(Snapshot[outside_month_days]), "0") & " dates outside the source month." & UNICHAR(10) &
+			FORMAT([Outside Month Trips], "#,0") & " accepted trips outside the source month."
+		displayFolder: Dashboard
+		lineageTag: 25ce9f98-f53f-4f24-851b-fd7e83d815e1
+
+	measure 'Connection Detail' =
+			"Local DataNexus reporting snapshot | NYC TLC Yellow Taxi | Source month: " & MAX(Snapshot[source_month]) & UNICHAR(10) &
+			"Snapshot generated (UTC): " & SUBSTITUTE(LEFT(MAX(Snapshot[generated_at_utc]), 19), "T", " ") & UNICHAR(10) &
+			"Refresh reads the current snapshot. Run DataNexus processing and reporting export before refreshing changed source data."
+		displayFolder: Dashboard
+		lineageTag: 0c70a422-25cf-404a-a8f4-6e28b633d768
+
+	column validated_source_rows
+		dataType: int64
+		formatString: #,0
+		lineageTag: 50970a25-99c4-4fd8-a9d4-b8123999121b
+		summarizeBy: sum
+		sourceColumn: validated_source_rows
+
+	column silver_rows
+		dataType: int64
+		formatString: #,0
+		lineageTag: 7038df6a-bde7-46ba-9974-2a6cf7ccee53
+		summarizeBy: sum
+		sourceColumn: silver_rows
+
+	column quarantined_rows
+		dataType: int64
+		formatString: #,0
+		lineageTag: 6ccdf078-0c32-4841-85a8-afeb021eede8
+		summarizeBy: sum
+		sourceColumn: quarantined_rows
+
+	column in_month_trip_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 5634e695-ca1b-46dc-b6e4-acb002b62e62
+		summarizeBy: sum
+		sourceColumn: in_month_trip_count
+
+	column outside_month_trip_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 1cb7eb6b-33f5-41bc-9437-6e2e4b4b8763
+		summarizeBy: sum
+		sourceColumn: outside_month_trip_count
+
+	column all_dates_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 56c88224-a2bb-4dff-a455-ce6ad6753bc9
+		summarizeBy: sum
+		sourceColumn: all_dates_count
+
+	column in_month_days
+		dataType: int64
+		formatString: #,0
+		lineageTag: 8caf0608-fb5c-4c39-a09e-0f42609b8d84
+		summarizeBy: sum
+		sourceColumn: in_month_days
+
+	column outside_month_days
+		dataType: int64
+		formatString: #,0
+		lineageTag: b14d2cb5-e64f-4eba-9379-b727085c4cf0
+		summarizeBy: sum
+		sourceColumn: outside_month_days
+
+	column generated_at_utc
+		dataType: string
+		lineageTag: 4d82143d-332c-4da8-b258-23d4f07cb94c
+		summarizeBy: none
+		sourceColumn: generated_at_utc
+
+	column source_month
+		dataType: string
+		lineageTag: c5d1a826-46a9-453a-8156-7689df7a77ca
+		summarizeBy: none
+		sourceColumn: source_month
+
+	partition Snapshot = m
+		mode: import
+		source =
+				let
+				    Snapshot = Json.Document(File.Contents(DataNexusRoot & "\data\dev\nyc_tlc\silver_gold_2024_01\reporting_preview.json")),
+				    Selected = Record.SelectFields(Snapshot, {"validated_source_rows","silver_rows","quarantined_rows","in_month_trip_count","outside_month_trip_count","all_dates_count","in_month_days","outside_month_days","generated_at_utc","source_month"}),
+				    Row = Table.FromRecords({Selected}),
+				    Typed = Table.TransformColumnTypes(Row, {{"validated_source_rows", Int64.Type},{"silver_rows", Int64.Type},{"quarantined_rows", Int64.Type},{"in_month_trip_count", Int64.Type},{"outside_month_trip_count", Int64.Type},{"all_dates_count", Int64.Type},{"in_month_days", Int64.Type},{"outside_month_days", Int64.Type}, {"generated_at_utc", type text}, {"source_month", type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

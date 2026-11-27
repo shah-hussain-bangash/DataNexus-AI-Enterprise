@@ -1,0 +1,13 @@
+**/.pbi/
+*.pbix
+*.pbit
+*.abf
+*.pbipcache
+*.sqlite*
+*.parquet
+*.csv
+*.env
+*.log
+DataNexus_Overview_Data.json
+reporting_preview.json
+sync-status.json

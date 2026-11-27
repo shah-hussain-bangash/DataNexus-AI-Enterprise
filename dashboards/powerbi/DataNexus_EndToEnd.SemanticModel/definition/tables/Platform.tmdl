@@ -1,0 +1,242 @@
+table Platform
+	lineageTag: ef62289e-7b8a-4054-85df-d3ef417e357d
+
+	measure 'Local Feeds' = MAX(Platform[local_feeds])
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: 24bd6ea0-c755-475d-a522-f7c50f654de9
+
+	measure 'Catalog Feeds' = MAX(Platform[catalog_feeds])
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: 8addffcc-dab7-4853-9563-71dca3129b90
+
+	measure 'Catalog Domains' = MAX(Platform[catalog_domains])
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: dc452427-bd60-4f82-8f26-4f40be86798c
+
+	measure 'Aviation Events' = MAX(Platform[aviation_events])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 22e15169-0884-405b-be2a-45f684d62e96
+
+	measure 'Aviation Aircraft' = MAX(Platform[aviation_aircraft])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 8e7f32b1-bc83-480b-9e39-17787ce1c598
+
+	measure 'MTA Observations' = MAX(Platform[mta_observations])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 9d317517-6661-40e2-8adb-73262b7046e7
+
+	measure 'Latest MTA Entities' = MAX(Platform[mta_latest_entities])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: bdd65dea-6c74-4ae4-bbab-881191c75f16
+
+	measure 'Latest Trip Updates' = MAX(Platform[mta_latest_trip_updates])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 62a55b5c-2bd4-49ef-850e-71f7d7983e9f
+
+	measure 'Latest Vehicle Positions' = MAX(Platform[mta_latest_vehicle_positions])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 476d4e40-fad3-4c8a-a8fe-f5912fe9ee78
+
+	measure 'Verified Continuous Feeds' = MAX(Platform[continuous_feeds_verified])
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: 8298950b-dd6d-4ada-aafa-9c8664f3d008
+
+	measure 'Integrity Checks' = MAX(Platform[integrity_checks_passed])
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: ae408db4-a819-4fc1-854b-192c4cdbdfe6
+
+	measure 'Planned Feeds' = [Catalog Feeds] - [Local Feeds]
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: 1c7e3144-49d1-490e-9fc4-f1018718f0eb
+
+	measure 'Release Evidence' = FORMAT(MAX(Platform[approved_controls]), "0") & " / " & FORMAT(MAX(Platform[required_controls]), "0")
+		formatString: @
+		displayFolder: Dashboard
+		lineageTag: 61f744ff-1906-4f6e-bf53-f80f40f755fa
+
+	measure 'Integrity Result' = FORMAT(MAX(Platform[integrity_checks_passed]), "0") & " / " & FORMAT(MAX(Platform[integrity_checks_total]), "0")
+		formatString: @
+		displayFolder: Dashboard
+		lineageTag: 36227069-8ecf-4b2d-916b-be5db0c1fb2c
+
+	measure 'Inventory Timestamp' = "Evidence captured (UTC): " & SUBSTITUTE(LEFT(MAX(Platform[captured_utc]),19), "T", " ")
+		formatString: @
+		displayFolder: Dashboard
+		lineageTag: b2a6199b-1801-42b1-ab75-769710916ca5
+
+	measure 'Telemetry Summary' = "MTA provider time (UTC): " & SUBSTITUTE(LEFT(MAX(Platform[mta_latest_provider_utc]),19), "T", " ") & UNICHAR(10) & "Aviation sample time (UTC): " & SUBSTITUTE(LEFT(MAX(Platform[aviation_latest]),19), "T", " ") & UNICHAR(10) & "Stored observations are historical evidence. Current provider or stream health is not established."
+		formatString: @
+		displayFolder: Dashboard
+		lineageTag: 906a72db-c07d-41b4-a4ae-2c51a8fb9af7
+
+	measure 'Release Narrative' = "Production release: " & MAX(Platform[release_status]) & " | Approved evidence: " & [Release Evidence] & UNICHAR(10) & "Local reporting integrity and production readiness are separate. Missing evidence is never treated as a passing control."
+		formatString: @
+		displayFolder: Dashboard
+		lineageTag: 804d62a9-50d8-4569-b172-7a9bea433f43
+
+	column captured_utc
+		dataType: string
+		lineageTag: 9285aa57-bc04-401f-ad76-bc737b7c7e5d
+		summarizeBy: none
+		sourceColumn: captured_utc
+
+	column local_feeds
+		dataType: int64
+		formatString: #,0
+		lineageTag: f74c3e37-add3-4c01-90f5-c8867b58946a
+		summarizeBy: sum
+		sourceColumn: local_feeds
+
+	column catalog_feeds
+		dataType: int64
+		formatString: #,0
+		lineageTag: 74482f0c-8c02-41ba-a001-181141989031
+		summarizeBy: sum
+		sourceColumn: catalog_feeds
+
+	column catalog_domains
+		dataType: int64
+		formatString: #,0
+		lineageTag: 34cca2b2-f630-4d1d-8401-626b2e923b34
+		summarizeBy: sum
+		sourceColumn: catalog_domains
+
+	column approved_controls
+		dataType: int64
+		formatString: #,0
+		lineageTag: 5f695704-9080-4bae-9a35-5d0e5e4bbea1
+		summarizeBy: sum
+		sourceColumn: approved_controls
+
+	column required_controls
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3ec5e646-1f0f-4523-b532-6d6410bead61
+		summarizeBy: sum
+		sourceColumn: required_controls
+
+	column release_status
+		dataType: string
+		lineageTag: 74da7f45-1db4-47c1-9e70-6f9c67d2c1b8
+		summarizeBy: none
+		sourceColumn: release_status
+
+	column aviation_events
+		dataType: int64
+		formatString: #,0
+		lineageTag: c0dc03e6-cdaa-4e61-a9ad-8ca2478a7698
+		summarizeBy: sum
+		sourceColumn: aviation_events
+
+	column aviation_aircraft
+		dataType: int64
+		formatString: #,0
+		lineageTag: 635df1b4-5528-45e3-accf-a053c3e164c4
+		summarizeBy: sum
+		sourceColumn: aviation_aircraft
+
+	column aviation_positions
+		dataType: int64
+		formatString: #,0
+		lineageTag: 7571f301-9d75-4784-908c-c14075a87f25
+		summarizeBy: sum
+		sourceColumn: aviation_positions
+
+	column aviation_latest
+		dataType: string
+		lineageTag: eb3e8a9e-a932-4bd7-bb0b-97dcd5a1e95f
+		summarizeBy: none
+		sourceColumn: aviation_latest
+
+	column mta_observations
+		dataType: int64
+		formatString: #,0
+		lineageTag: 6abbb1a4-50ed-47be-a3cc-2d5e24f6f78c
+		summarizeBy: sum
+		sourceColumn: mta_observations
+
+	column mta_latest_entities
+		dataType: int64
+		formatString: #,0
+		lineageTag: e0cbbc52-b240-4f63-bc7f-c7c3f9acb401
+		summarizeBy: sum
+		sourceColumn: mta_latest_entities
+
+	column mta_latest_trip_updates
+		dataType: int64
+		formatString: #,0
+		lineageTag: aa8f5ba6-6bfc-4c98-bdd4-788ca30af806
+		summarizeBy: sum
+		sourceColumn: mta_latest_trip_updates
+
+	column mta_latest_vehicle_positions
+		dataType: int64
+		formatString: #,0
+		lineageTag: 33b74ced-a891-42a6-96cf-652f2268edbb
+		summarizeBy: sum
+		sourceColumn: mta_latest_vehicle_positions
+
+	column mta_latest_alerts
+		dataType: int64
+		formatString: #,0
+		lineageTag: 812135ee-3e69-4035-aa13-d21a59c86778
+		summarizeBy: sum
+		sourceColumn: mta_latest_alerts
+
+	column mta_latest_provider_utc
+		dataType: string
+		lineageTag: 0a6706ed-9e17-4e21-a610-90478d132125
+		summarizeBy: none
+		sourceColumn: mta_latest_provider_utc
+
+	column mta_latest_observed_utc
+		dataType: string
+		lineageTag: 7e98d877-c19f-4bde-92e6-a747a7503e51
+		summarizeBy: none
+		sourceColumn: mta_latest_observed_utc
+
+	column continuous_feeds_verified
+		dataType: int64
+		formatString: #,0
+		lineageTag: ee903c9b-4a0e-4c16-bd26-75e1a68a2b4b
+		summarizeBy: sum
+		sourceColumn: continuous_feeds_verified
+
+	column integrity_checks_passed
+		dataType: int64
+		formatString: #,0
+		lineageTag: a1ecccd3-bb59-43d6-8c21-6dc46c3fc67f
+		summarizeBy: sum
+		sourceColumn: integrity_checks_passed
+
+	column integrity_checks_total
+		dataType: int64
+		formatString: #,0
+		lineageTag: f6c19010-d98f-41ef-9c7f-377949c57b60
+		summarizeBy: sum
+		sourceColumn: integrity_checks_total
+
+	partition Platform = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[metrics]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"captured_utc", type text}, {"local_feeds", Int64.Type}, {"catalog_feeds", Int64.Type}, {"catalog_domains", Int64.Type}, {"approved_controls", Int64.Type}, {"required_controls", Int64.Type}, {"release_status", type text}, {"aviation_events", Int64.Type}, {"aviation_aircraft", Int64.Type}, {"aviation_positions", Int64.Type}, {"aviation_latest", type text}, {"mta_observations", Int64.Type}, {"mta_latest_entities", Int64.Type}, {"mta_latest_trip_updates", Int64.Type}, {"mta_latest_vehicle_positions", Int64.Type}, {"mta_latest_alerts", Int64.Type}, {"mta_latest_provider_utc", type text}, {"mta_latest_observed_utc", type text}, {"continuous_feeds_verified", Int64.Type}, {"integrity_checks_passed", Int64.Type}, {"integrity_checks_total", Int64.Type}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

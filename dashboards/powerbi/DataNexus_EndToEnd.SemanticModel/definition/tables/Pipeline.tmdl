@@ -1,0 +1,59 @@
+table Pipeline
+	lineageTag: e03256bf-9cfa-4b94-8564-281b2b39f87b
+
+	column Order
+		dataType: int64
+		formatString: #,0
+		lineageTag: d7c91be0-19b6-46ce-b3bc-2c1ff943d27e
+		summarizeBy: sum
+		sourceColumn: Order
+
+	column Stage
+		dataType: string
+		lineageTag: dac457cc-bd82-4223-ac1f-d2b961f518e6
+		summarizeBy: none
+		sourceColumn: Stage
+
+	column Status
+		dataType: string
+		lineageTag: 3f4d4206-ef33-4bb7-aceb-2824ba82ab25
+		summarizeBy: none
+		sourceColumn: Status
+
+	column Count
+		dataType: int64
+		formatString: #,0
+		lineageTag: ee378531-87af-4ec9-9b99-c661e7ad91ba
+		summarizeBy: sum
+		sourceColumn: Count
+
+	column Unit
+		dataType: string
+		lineageTag: 426f0721-460c-4340-98f6-e2648e77c80d
+		summarizeBy: none
+		sourceColumn: Unit
+
+	column Evidence
+		dataType: string
+		lineageTag: 00c622f6-393c-450e-b1d9-0e722315766e
+		summarizeBy: none
+		sourceColumn: Evidence
+
+	column Detail
+		dataType: string
+		lineageTag: 8af70ab4-1533-4125-a808-9417d69b5d67
+		summarizeBy: none
+		sourceColumn: Detail
+
+	partition Pipeline = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[pipeline]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"Order", Int64.Type}, {"Stage", type text}, {"Status", type text}, {"Count", Int64.Type}, {"Unit", type text}, {"Evidence", type text}, {"Detail", type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

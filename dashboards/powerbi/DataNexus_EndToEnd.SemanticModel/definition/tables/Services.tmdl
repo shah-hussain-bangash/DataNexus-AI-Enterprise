@@ -1,0 +1,33 @@
+table Services
+	lineageTag: 1a7b5c7f-34bd-42e0-a775-58675167f4a9
+
+	column Component
+		dataType: string
+		lineageTag: 9cdd83fd-b15d-45ce-bd18-4b2ad065f917
+		summarizeBy: none
+		sourceColumn: Component
+
+	column 'Evidence state'
+		dataType: string
+		lineageTag: f41760e2-683f-40bc-b4b5-d4ddb7627c34
+		summarizeBy: none
+		sourceColumn: Evidence state
+
+	column Meaning
+		dataType: string
+		lineageTag: ed0c59a1-c2b0-4915-836b-8e447cc090ab
+		summarizeBy: none
+		sourceColumn: Meaning
+
+	partition Services = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[services]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"Component", type text}, {"Evidence state", type text}, {"Meaning", type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

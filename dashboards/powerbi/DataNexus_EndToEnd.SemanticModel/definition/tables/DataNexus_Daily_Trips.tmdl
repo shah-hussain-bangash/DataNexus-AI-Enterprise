@@ -1,0 +1,120 @@
+table DataNexus_Daily_Trips
+	lineageTag: a9dba15d-d841-4489-bd17-e16580158d48
+
+	measure 'Total Trips' = SUM(DataNexus_Daily_Trips[trip_count])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: d74fea14-31da-4bcf-b961-7f8232b5693d
+
+	measure 'Trip Total USD' = SUM(DataNexus_Daily_Trips[total_amount_sum])
+		formatString: "$"#,0
+		displayFolder: Dashboard
+		lineageTag: 43fd821d-8652-4406-b473-0e73dcb1acf5
+
+	measure 'Distance Miles' = SUM(DataNexus_Daily_Trips[distance_sum])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: d80cb329-4f2e-4d10-b490-5d870da28c5f
+
+	measure 'Average Trip USD' = DIVIDE([Trip Total USD], [Total Trips])
+		formatString: "$"0.00
+		displayFolder: Dashboard
+		lineageTag: c6873dd0-ddfb-42c0-87d5-5250808e57cc
+
+	measure 'Average Distance' = DIVIDE([Distance Miles], [Total Trips])
+		formatString: 0.00
+		displayFolder: Dashboard
+		lineageTag: cd12e006-59f3-4034-88b0-8824a8a919bd
+
+	measure 'Daily Average Trips' = DIVIDE([Total Trips], DISTINCTCOUNT(DataNexus_Daily_Trips[date]))
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 8473aad2-df25-464e-a4c9-b330749806bf
+
+	measure 'Peak Daily Trips' = MAX(DataNexus_Daily_Trips[trip_count])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: cadff831-1284-42f5-b230-5df859d3c784
+
+	measure 'Recorded Days' = DISTINCTCOUNT(DataNexus_Daily_Trips[date])
+		formatString: 0
+		displayFolder: Dashboard
+		lineageTag: f15b760c-699d-4db7-b38d-e8ca998678f7
+
+	measure 'Avg Trips per Weekday' = DIVIDE([Total Trips], DISTINCTCOUNT(DataNexus_Daily_Trips[date]))
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 811f1bc3-946c-4b15-b36d-577a78f7038a
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		lineageTag: 19d5a110-2602-4626-b4b3-68d24da11c49
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column distance_sum
+		dataType: double
+		formatString: #,0.00
+		lineageTag: fffab834-4b28-4c59-a13b-5d13cc5fc6d5
+		summarizeBy: sum
+		sourceColumn: distance_sum
+
+	column total_amount_sum
+		dataType: double
+		formatString: "$"#,0.00
+		lineageTag: adac078d-bf6c-493a-a7c6-0c4cb09a3113
+		summarizeBy: sum
+		sourceColumn: total_amount_sum
+
+	column trip_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 13ec99cf-09d5-4a7c-a733-031734dd3512
+		summarizeBy: sum
+		sourceColumn: trip_count
+
+	column within_source_month
+		dataType: boolean
+		lineageTag: 92680d3a-d72f-4703-9900-89976640a786
+		summarizeBy: none
+		sourceColumn: within_source_month
+
+	column Day
+		dataType: string
+		lineageTag: 91cd241d-c43a-46fd-b446-e1f18f535ccd
+		summarizeBy: none
+		sourceColumn: Day
+		sortByColumn: 'Day Order'
+
+	column 'Day Order'
+		dataType: int64
+		formatString: 0
+		lineageTag: eb2573a7-8e49-4444-bedd-a695b856ad93
+		summarizeBy: sum
+		sourceColumn: Day Order
+
+	column 'Day Type'
+		dataType: string
+		lineageTag: bec3bac9-f19e-4ad0-83a0-8c74204852c8
+		summarizeBy: none
+		sourceColumn: Day Type
+
+	partition DataNexus_Daily_Trips = m
+		mode: import
+		source =
+				let
+				    Snapshot = Json.Document(File.Contents(DataNexusRoot & "\data\dev\nyc_tlc\silver_gold_2024_01\reporting_preview.json")),
+				    Valid = if Snapshot[stage] = "local_historical_reporting_preview" and Snapshot[silver_rows] = List.Sum(List.Transform(Snapshot[daily], each [trip_count])) then Snapshot else error "DataNexus reporting snapshot failed reconciliation",
+				    Daily = Table.FromRecords(Valid[daily]),
+				    Typed = Table.TransformColumnTypes(Daily, {{"date", type date}, {"distance_sum", type number}, {"total_amount_sum", type number}, {"trip_count", Int64.Type}, {"within_source_month", type logical}}),
+				    Weekday = Table.AddColumn(Typed, "Day", each Date.ToText([date], "ddd", "en-US"), type text),
+				    Sort = Table.AddColumn(Weekday, "Day Order", each Date.DayOfWeek([date], Day.Monday), Int64.Type),
+				    DayType = Table.AddColumn(Sort, "Day Type", each if [Day Order] >= 5 then "Weekend" else "Weekday", type text)
+				in
+				    DayType
+
+	annotation PBI_ResultType = Table
+

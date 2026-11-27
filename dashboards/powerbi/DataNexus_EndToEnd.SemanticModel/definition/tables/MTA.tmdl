@@ -1,0 +1,71 @@
+table MTA
+	lineageTag: f97fa03a-b147-4b99-bb51-c2148729e5f5
+
+	measure 'Observed Entities' = MAX(MTA[entities])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: a01eea7f-4bcd-49e3-a78b-132d10427a73
+
+	measure 'Observed Trip Updates' = MAX(MTA[trip_updates])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 797e467b-47c9-460b-b772-7f8aa5b8f7e6
+
+	column provider_timestamp_utc
+		dataType: string
+		lineageTag: 6f110ee0-e978-470a-a3ac-faca418e4848
+		summarizeBy: none
+		sourceColumn: provider_timestamp_utc
+
+	column observed_at_utc
+		dataType: string
+		lineageTag: f3963bae-68a8-4a8a-a785-b794e3e83666
+		summarizeBy: none
+		sourceColumn: observed_at_utc
+
+	column feed_id
+		dataType: string
+		lineageTag: 600b2889-f357-40f2-b91d-f233630633a7
+		summarizeBy: none
+		sourceColumn: feed_id
+
+	column entities
+		dataType: int64
+		formatString: #,0
+		lineageTag: f618d00a-fa18-4e27-878b-8c5af1e48f91
+		summarizeBy: sum
+		sourceColumn: entities
+
+	column trip_updates
+		dataType: int64
+		formatString: #,0
+		lineageTag: 687bdf58-a896-4292-b499-37d9e3e51e2a
+		summarizeBy: sum
+		sourceColumn: trip_updates
+
+	column vehicle_positions
+		dataType: int64
+		formatString: #,0
+		lineageTag: 9b79a472-72ff-4a46-8657-c224aef41966
+		summarizeBy: sum
+		sourceColumn: vehicle_positions
+
+	column alerts
+		dataType: int64
+		formatString: #,0
+		lineageTag: d6aa7a6c-992b-4baa-a537-c433d84c82a5
+		summarizeBy: sum
+		sourceColumn: alerts
+
+	partition MTA = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[mta]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"provider_timestamp_utc", type text}, {"observed_at_utc", type text}, {"feed_id", type text}, {"entities", Int64.Type}, {"trip_updates", Int64.Type}, {"vehicle_positions", Int64.Type}, {"alerts", Int64.Type}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

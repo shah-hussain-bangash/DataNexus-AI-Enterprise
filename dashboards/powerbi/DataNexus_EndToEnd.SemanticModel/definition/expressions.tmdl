@@ -1,0 +1,5 @@
+expression DataNexusRoot = "C:\DataNexus-AI-Enterprise" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: d87c79b5-c4b5-4f1a-b1ca-41e02fd82ba8
+
+expression PowerBIDataRoot = "C:\DataNexus-PowerBI-Local" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 3c8f0985-af67-459b-a2dc-3ab10f1b78da

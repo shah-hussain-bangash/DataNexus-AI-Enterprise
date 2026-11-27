@@ -1,0 +1,40 @@
+table ReleaseControls
+	lineageTag: 664ffac2-8bf3-4aa2-9541-37b1b679a109
+
+	column Control
+		dataType: string
+		lineageTag: a1c045e1-e3d0-40c7-a693-e6b530fed45b
+		summarizeBy: none
+		sourceColumn: Control
+
+	column Status
+		dataType: string
+		lineageTag: 8e6b88b6-b30c-4e3c-b426-139b76ba9bdb
+		summarizeBy: none
+		sourceColumn: Status
+
+	column Detail
+		dataType: string
+		lineageTag: 64c46582-8d7a-4f8d-9baf-4854330b2b45
+		summarizeBy: none
+		sourceColumn: Detail
+
+	column Approved
+		dataType: int64
+		formatString: #,0
+		lineageTag: d93d7f38-212c-4854-b7fd-84fcbf13926e
+		summarizeBy: sum
+		sourceColumn: Approved
+
+	partition ReleaseControls = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[controls]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"Control", type text}, {"Status", type text}, {"Detail", type text}, {"Approved", Int64.Type}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,27 @@
+table Integrity
+	lineageTag: cfeba916-12bc-47d5-b0fb-80f7352f61af
+
+	column Check
+		dataType: string
+		lineageTag: 1dd96042-ea3f-4ca0-a1f2-312f0869a2a4
+		summarizeBy: none
+		sourceColumn: Check
+
+	column Result
+		dataType: string
+		lineageTag: e50ff80f-6833-4809-ba95-15cf65934373
+		summarizeBy: none
+		sourceColumn: Result
+
+	partition Integrity = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\DataNexus_Overview_Data.json")),
+				    Rows = Table.FromRecords(Inventory[checks]),
+				    Typed = Table.TransformColumnTypes(Rows, {{"Check", type text}, {"Result", type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

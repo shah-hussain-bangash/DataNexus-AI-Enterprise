@@ -1,0 +1,35 @@
+table QualityIssues
+	lineageTag: 239d6df6-3ece-48ce-afdf-5f89d98ef93c
+
+	measure 'Issue Observations' = SUM(QualityIssues[Observations])
+		formatString: #,0
+		displayFolder: Dashboard
+		lineageTag: 847d6b32-9170-4ec8-b8c4-edf10a3f7c69
+
+	column Reason
+		dataType: string
+		lineageTag: 712b6edc-73ad-4769-86e8-dd96f0b4da03
+		summarizeBy: none
+		sourceColumn: Reason
+
+	column Observations
+		dataType: int64
+		formatString: #,0
+		lineageTag: ba336d4b-edb7-4450-b7e8-3fa58f8e5218
+		summarizeBy: sum
+		sourceColumn: Observations
+
+	partition QualityIssues = m
+		mode: import
+		source =
+				let
+				    Manifest = Json.Document(File.Contents(DataNexusRoot & "\data\dev\nyc_tlc\silver_gold_2024_01\transform_manifest.json")),
+				    Reasons = Record.ToTable(Manifest[rejection_reasons]),
+				    Renamed = Table.RenameColumns(Reasons, {{"Name", "Reason"}, {"Value", "Observations"}}),
+				    Typed = Table.TransformColumnTypes(Renamed, {{"Reason", type text}, {"Observations", Int64.Type}}),
+				    Friendly = Table.TransformColumns(Typed, {{"Reason", each Text.Proper(Text.Replace(_, "_", " ")), type text}})
+				in
+				    Friendly
+
+	annotation PBI_ResultType = Table
+
