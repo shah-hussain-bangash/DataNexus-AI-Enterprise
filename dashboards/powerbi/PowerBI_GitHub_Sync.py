@@ -135,7 +135,15 @@ def sync(files,state):
     git(checkout,'fetch','origin','main')
     # Retry a previously rejected ordinary push before creating another commit.
     ahead=int(git(checkout,'rev-list','--count','origin/main..HEAD'))
-    if ahead:git(checkout,'push','origin','HEAD:main')
+    if ahead:
+        behind=int(git(checkout,'rev-list','--count','HEAD..origin/main'))
+        if behind:
+            try:git(checkout,'rebase','origin/main')
+            except Exception:
+                try:git(checkout,'rebase','--abort')
+                except Exception:pass
+                raise RuntimeError('Remote dashboard conflict; pending local commit preserved for review')
+        git(checkout,'push','origin','HEAD:main')
     git(checkout,'merge','--ff-only','origin/main')
     target=(checkout/PREFIX).resolve()
     if not target.is_relative_to(checkout.resolve()):raise ValueError('Invalid dashboard destination')
