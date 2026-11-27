@@ -1,0 +1,51 @@
+table PropertyDaily
+	lineageTag: ca1be089-a9c5-49da-893c-f74a3dff9e90
+
+	measure 'Dubai Sales Transactions (Local CSV)' = SUM(PropertyDaily[sales_count])
+		formatString: #,0
+
+	measure 'Dubai Sales Value AED (Local CSV)' = SUM(PropertyDaily[total_amount_aed])
+		formatString: #,0
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+
+	column area
+		dataType: string
+		sourceColumn: area
+
+	column property_type
+		dataType: string
+		sourceColumn: property_type
+
+	column sales_count
+		dataType: int64
+		sourceColumn: sales_count
+
+	column total_amount_aed
+		dataType: double
+		sourceColumn: total_amount_aed
+
+	column currency
+		dataType: string
+		sourceColumn: currency
+
+	column source_kind
+		dataType: string
+		sourceColumn: source_kind
+
+	partition PropertyDaily = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[property_daily],
+				    Empty = #table(type table [date=date,area=text,property_type=text,sales_count=Int64.Type,total_amount_aed=number,currency=text,source_kind=text], {}),
+				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"date",type date},{"area",type text},{"property_type",type text},{"sales_count",Int64.Type},{"total_amount_aed",type number},{"currency",type text},{"source_kind",type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

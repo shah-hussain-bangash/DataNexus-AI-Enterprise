@@ -79,6 +79,9 @@ def collect(repo):
     if bulk_data and energy_data:raise ValueError('EIA API and bulk snapshots both present; select one verified historical source')
     energy_data=bulk_data or energy_data
     energy_rows=energy_data['records'] if energy_data else []
+    dld=load_module('datanexus_dld',repo/'scripts/ingest_dld_transactions.py')
+    property_data=dld.load(data/'dubai_property')
+    property_rows=property_data['records'] if property_data else []
     registry=load_module('datanexus_source_registry',repo/'apps/api/source_registry.py')
     gate=load_module('datanexus_release_gate',repo/'scripts/release_gate.py').readiness_report(repo/'production-evidence')
     sources=[
@@ -131,6 +134,13 @@ def collect(repo):
                      'Connection State':'local_historical_snapshot',
                      'Refresh Mode':'manual_import',
                      'Evidence Type':'USGS daily mean discharge and SHA-256; cfs'})
+    if property_data:
+        item=next(x for x in domain_coverage if x['Domain ID']=='property')
+        item.update({'Historical Connection':'Local DLD-shaped CSV aggregated; source review pending',
+                     'Verified Local Feeds':0,'Data Available':True,
+                     'Connection State':'local_unverified_source',
+                     'Licensing State':'review_required','Refresh Mode':'manual_import',
+                     'Evidence Type':'Operator-supplied CSV hash; no provider origin certification'})
     if energy_data:
         item=next(x for x in domain_coverage if x['Domain ID']=='energy')
         item.update({'Historical Connection':'Verified local EIA-930 PJM hourly demand' if bulk_data else 'Verified local EIA US48 hourly demand',
@@ -179,7 +189,15 @@ def collect(repo):
             'Unit':'hourly demand records','Observed UTC':energy_data['metadata']['retrieved_at_utc'],
             'Status':'Validated local history','Evidence':'EIA-930 six-month BALANCE CSV + SHA-256' if bulk_data else 'EIA API v2 + SHA-256',
             'Scope':energy_data['metadata']['respondent']+' '+energy_data['metadata']['start']+' to '+energy_data['metadata']['end']})
-    feed_count=sum((x['Records'] or 0)>0 for x in sources)
+    if property_data:
+        sources.append({'Feed':'Dubai DLD Transactions (operator-supplied CSV)','Domain':'Dubai Property',
+            'Mode':'Local historical aggregate for review',
+            'Records':property_data['metadata']['sales_rows'],'Unit':'sales transactions',
+            'Observed UTC':property_data['metadata']['retrieved_at_utc'],
+            'Status':'Local CSV only; official provenance and reuse review pending',
+            'Evidence':'Schema checks and SHA-256; source not independently verified',
+            'Scope':'Area/date/property type aggregates; no party identifiers'})
+    feed_count=sum((x['Records'] or 0)>0 and x['Status']!='Local CSV only; official provenance and reuse review pending' for x in sources)
     domains=len(set(x['Domain'] for x in sources))
     metrics={'captured_utc':now,'local_feeds':feed_count,'catalog_feeds':len(sources),'catalog_domains':domains,'approved_controls':gate['passed'],'required_controls':gate['required'],'release_status':gate['status'],'aviation_events':av['events'],'aviation_aircraft':av['aircraft'],'aviation_positions':av['positions'],'aviation_latest':av['latest'],'mta_observations':len(mta),'mta_latest_entities':latest.get('entities'),'mta_latest_trip_updates':latest.get('trip_updates'),'mta_latest_vehicle_positions':latest.get('vehicle_positions'),'mta_latest_alerts':latest.get('alerts'),'mta_latest_provider_utc':latest.get('provider_timestamp_utc'),'mta_latest_observed_utc':latest.get('observed_at_utc'),'continuous_feeds_verified':0,'integrity_checks_passed':sum(checks.values()),'integrity_checks_total':len(checks)}
     pipeline=[
@@ -200,7 +218,7 @@ def collect(repo):
         ('Production release',gate['status'],f"{gate['passed']}/{gate['required']} controls have approved evidence metadata"),
     ]]
     controls=[{'Control':x['control'].replace('_',' ').title(),'Status':'Approved evidence' if x['verified'] else 'No approved evidence','Detail':x['reason'],'Approved':int(x['verified'])} for x in gate['controls']]
-    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'seismic_events':seismic,'weather_daily':weather,'coastal_hourly':coastal_rows,'river_daily':river_rows,'energy_hourly':energy_rows,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
+    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'seismic_events':seismic,'weather_daily':weather,'coastal_hourly':coastal_rows,'river_daily':river_rows,'energy_hourly':energy_rows,'property_daily':property_rows,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
