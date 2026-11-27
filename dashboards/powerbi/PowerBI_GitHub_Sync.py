@@ -119,10 +119,10 @@ def git(folder,*args):
     if p.returncode:raise RuntimeError('git '+args[0]+': '+(p.stderr or p.stdout).strip())
     return p.stdout.strip()
 
-def status(state,**values):
-    state.mkdir(parents=True,exist_ok=True)
+def status(state_dir,**values):
+    state_dir.mkdir(parents=True,exist_ok=True)
     d={'checked_utc':datetime.now(timezone.utc).isoformat(),**values}
-    (state/'sync-status.json').write_text(json.dumps(d,indent=2)+'\n',encoding='utf-8')
+    (state_dir/'sync-status.json').write_text(json.dumps(d,indent=2)+'\n',encoding='utf-8')
 
 def sync(files,state):
     checkout=state/'checkout'
