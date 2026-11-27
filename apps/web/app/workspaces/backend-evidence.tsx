@@ -14,6 +14,8 @@ type MtaResponse={tenant_id:string;state:string;count:number;observations:MtaObs
 type MtaMonitor={tenant_id:string;state:string;checked_at_utc:string;consumer_lag_messages:number|null;offset_state:string;stored_aggregate_records:number;latest_stored_source_age_seconds:number;snapshot_age_seconds:number;snapshot_stale:boolean;caveat:string};
 type MtaAlertEntry={snapshot_sha256:string;source_snapshot_checked_at_utc:string;assessed_at_utc:string;status:string;alert_count:number;incident_lifecycle:string;alerts:{code:string;severity:string;reason:string;manual_action:string}[]};
 type MtaAlertHistory={tenant_id:string;state:string;count:number;entries:MtaAlertEntry[];production_approved:boolean;caveat:string};
+type IncidentReview={assessment_sha256:string;severity:string;alerts:string[];review_state:string;last_action_utc:string|null;assignee:string|null;resolution_self_reported:boolean};
+type IncidentReviewResponse={tenant_id:string;state:string;count:number;incidents:IncidentReview[];production_approved:boolean;caveat?:string};
 type Readiness={tenant_id:string;release_status:string;approved_controls:number;required_controls:number;controls:{id:string;status:string}[]};
 type Load<T>={state:"loading"|"ready"|"unauthorized"|"error";data?:T;message?:string};
 export default function BackendEvidence(){
@@ -25,6 +27,7 @@ export default function BackendEvidence(){
  const [mta,setMta]=useState<Load<MtaResponse>>({state:"loading"});
  const [monitor,setMonitor]=useState<Load<MtaMonitor>>({state:"loading"});
  const [history,setHistory]=useState<Load<MtaAlertHistory>>({state:"loading"});
+ const [incidents,setIncidents]=useState<Load<IncidentReviewResponse>>({state:"loading"});
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
   let live=true;
@@ -39,7 +42,7 @@ export default function BackendEvidence(){
     if(live)setter({state:"error",message:"Cannot reach backend API"});
    }
   }
-  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});setHistory({state:"loading"});
+  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});setHistory({state:"loading"});setIncidents({state:"loading"});
   void load<Catalog>("catalog",setCatalog);
   void load<Readiness>("readiness",setReadiness);
   void load<Bronze>("nyc-tlc/bronze",setBronze);
@@ -48,6 +51,7 @@ export default function BackendEvidence(){
   void load<MtaResponse>("mta/observations",setMta);
   void load<MtaMonitor>("mta/monitor",setMonitor);
   void load<MtaAlertHistory>("mta/alert-history",setHistory);
+  void load<IncidentReviewResponse>("mta/incident-reviews",setIncidents);
   return()=>{live=false};
  },[refresh]);
  return <section className="evidence-root" aria-label="Authenticated enterprise backend readiness">
@@ -81,6 +85,16 @@ export default function BackendEvidence(){
         {history.data.entries.map(e=><div key={e.snapshot_sha256}><strong>{e.assessed_at_utc} • {e.status.replaceAll("_"," ")} • {e.incident_lifecycle}</strong><span>{e.alert_count} alert(s) • {e.alerts.map(a=>a.severity.toUpperCase()+": "+a.code).join(", ")||"No threshold breaches"}</span></div>)}
       </div>}
       <small>{history.data.caveat}</small>
+    </>}
+  </article>
+  <article className="evidence-card" style={{marginTop:12}} aria-label="MTA incident review ledger">
+    <div className="evidence-title"><ShieldCheck size={21}/><h3>MTA operator incident reviews</h3></div>
+    {incidents.state==="loading"?<p role="status">Reading local incident review actions...</p>:incidents.state==="unauthorized"?<p>Sign in to view incident reviews.</p>:incidents.state==="error"?<p role="alert">Incident reviews unavailable: {incidents.message}</p>:incidents.data&&<>
+      <p><strong>{incidents.data.count} incident assessment(s)</strong> • operator-managed local evidence • no automatic resolution</p>
+      {incidents.data.incidents.length===0?<p>No actionable alert assessments recorded.</p>:<div className="evidence-rows">
+        {incidents.data.incidents.map(e=><div key={e.assessment_sha256}><strong>{e.review_state.toUpperCase()} • {e.severity} • {e.assessment_sha256.slice(0,12)}…</strong><span>{e.alerts.join(", ")} • {e.assignee?"Assigned to "+e.assignee:"Not assigned"}{e.resolution_self_reported?" • operator-reported resolution (unverified)":""}</span></div>)}
+      </div>}
+      <small>{incidents.data.caveat||"Operator notes are not independently verified incident resolutions."}</small>
     </>}
   </article>
   <article className="evidence-card" style={{marginTop:12}} aria-label="MTA Kafka consumed observations">
