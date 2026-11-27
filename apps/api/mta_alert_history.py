@@ -6,8 +6,10 @@ from pathlib import Path
 
 HEX=re.compile(r"^[a-f0-9]{64}$")
 ALLOWED_CODES={"MONITOR_STALE","OFFSET_UNKNOWN","CONSUMER_BACKLOG","STORED_OBSERVATION_OLD"}
-def read_alert_history(data_root,limit=20):
+def read_alert_history(data_root,limit=20,now=None):
     if type(limit)is not int or not 1<=limit<=50:raise ValueError("Invalid limit")
+    clock=now if now is not None else datetime.now(timezone.utc)
+    if clock.tzinfo is None:raise ValueError("Timezone-aware clock required")
     folder=Path(data_root).resolve()/"mta"/"alert_history"
     if not folder.is_dir():
         return {"state":"local_alert_history_empty","entries":[],"count":0,"production_approved":False,
@@ -36,10 +38,9 @@ def read_alert_history(data_root,limit=20):
         expected="critical" if any(x["severity"]=="critical" for x in data["alerts"]) else ("attention" if data["alerts"] else "no_threshold_breaches_in_snapshot")
         if data["status"]!=expected or data["incident_lifecycle"]!=("unreviewed" if data["alerts"] else "not_applicable"):
             raise ValueError("Contradictory incident status")
-        now=datetime.now(timezone.utc)
         for key in ("assessed_at_utc","source_snapshot_checked_at_utc"):
             moment=datetime.fromisoformat(data[key].replace("Z","+00:00"))
-            if moment.tzinfo is None or moment>now:raise ValueError("Invalid alert timestamp")
+            if moment.tzinfo is None or moment>clock:raise ValueError("Invalid alert timestamp")
         entries.append(data)
     entries.sort(key=lambda x:x["assessed_at_utc"],reverse=True)
     return {"state":"local_alert_history","entries":entries,"count":len(entries),
