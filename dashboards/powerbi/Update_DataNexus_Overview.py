@@ -72,6 +72,9 @@ def collect(repo):
     usgs_river=load_module('datanexus_usgs_river',repo/'scripts/ingest_usgs_river.py')
     river_data=usgs_river.load(data/'usgs_river')
     river_rows=river_data['records'] if river_data else []
+    eia=load_module('datanexus_eia',repo/'scripts/ingest_eia_energy.py')
+    energy_data=eia.load(data/'eia_energy')
+    energy_rows=energy_data['records'] if energy_data else []
     registry=load_module('datanexus_source_registry',repo/'apps/api/source_registry.py')
     gate=load_module('datanexus_release_gate',repo/'scripts/release_gate.py').readiness_report(repo/'production-evidence')
     sources=[
@@ -124,6 +127,13 @@ def collect(repo):
                      'Connection State':'local_historical_snapshot',
                      'Refresh Mode':'manual_import',
                      'Evidence Type':'USGS daily mean discharge and SHA-256; cfs'})
+    if energy_data:
+        item=next(x for x in domain_coverage if x['Domain ID']=='energy')
+        item.update({'Historical Connection':'Verified local EIA US48 hourly demand',
+                     'Verified Local Feeds':1,'Data Available':True,
+                     'Connection State':'local_historical_snapshot',
+                     'Refresh Mode':'manual_import',
+                     'Evidence Type':'EIA API v2 demand and SHA-256; key not exported'})
     domain_coverage.append({'Domain ID':'aviation','Domain':'Aviation','Region':'Global',
         'Historical Source':'Local aviation SQLite events','Latest Source':'No verified live source',
         'Historical Connection':'Local event sample' if av['events'] else 'No local events',
@@ -159,6 +169,12 @@ def collect(repo):
             'Unit':'site-days','Observed UTC':river_data['metadata']['retrieved_at_utc'],
             'Status':'Validated local history','Evidence':'Modern USGS API + record digest',
             'Scope':river_data['metadata']['site']+' '+river_data['metadata']['start']+' to '+river_data['metadata']['end']})
+    if energy_data:
+        sources.append({'Feed':'EIA US48 Hourly Electricity Demand','Domain':'Energy Grid',
+            'Mode':'Historical hourly regional batch','Records':len(energy_rows),
+            'Unit':'hourly demand records','Observed UTC':energy_data['metadata']['retrieved_at_utc'],
+            'Status':'Validated local history','Evidence':'EIA API v2 + SHA-256',
+            'Scope':energy_data['metadata']['respondent']+' '+energy_data['metadata']['start']+' to '+energy_data['metadata']['end']})
     feed_count=sum((x['Records'] or 0)>0 for x in sources)
     domains=len(set(x['Domain'] for x in sources))
     metrics={'captured_utc':now,'local_feeds':feed_count,'catalog_feeds':len(sources),'catalog_domains':domains,'approved_controls':gate['passed'],'required_controls':gate['required'],'release_status':gate['status'],'aviation_events':av['events'],'aviation_aircraft':av['aircraft'],'aviation_positions':av['positions'],'aviation_latest':av['latest'],'mta_observations':len(mta),'mta_latest_entities':latest.get('entities'),'mta_latest_trip_updates':latest.get('trip_updates'),'mta_latest_vehicle_positions':latest.get('vehicle_positions'),'mta_latest_alerts':latest.get('alerts'),'mta_latest_provider_utc':latest.get('provider_timestamp_utc'),'mta_latest_observed_utc':latest.get('observed_at_utc'),'continuous_feeds_verified':0,'integrity_checks_passed':sum(checks.values()),'integrity_checks_total':len(checks)}
@@ -180,7 +196,7 @@ def collect(repo):
         ('Production release',gate['status'],f"{gate['passed']}/{gate['required']} controls have approved evidence metadata"),
     ]]
     controls=[{'Control':x['control'].replace('_',' ').title(),'Status':'Approved evidence' if x['verified'] else 'No approved evidence','Detail':x['reason'],'Approved':int(x['verified'])} for x in gate['controls']]
-    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'seismic_events':seismic,'weather_daily':weather,'coastal_hourly':coastal_rows,'river_daily':river_rows,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
+    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'seismic_events':seismic,'weather_daily':weather,'coastal_hourly':coastal_rows,'river_daily':river_rows,'energy_hourly':energy_rows,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)

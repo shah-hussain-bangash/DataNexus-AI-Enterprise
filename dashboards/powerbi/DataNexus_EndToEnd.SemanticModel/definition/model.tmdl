@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["DataNexus_Daily_Trips","Snapshot","QualityIssues","Platform","Sources","Pipeline","Services","ReleaseControls","Integrity","MTA","DomainCoverage","AviationDaily","SeismicEvents","WeatherDaily","CoastalHourly","RiverDaily"]
+annotation PBI_QueryOrder = ["DataNexus_Daily_Trips","Snapshot","QualityIssues","Platform","Sources","Pipeline","Services","ReleaseControls","Integrity","MTA","DomainCoverage","AviationDaily","SeismicEvents","WeatherDaily","CoastalHourly","RiverDaily","EnergyHourly"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
@@ -29,6 +29,7 @@ ref table SeismicEvents
 ref table WeatherDaily
 ref table CoastalHourly
 ref table RiverDaily
+ref table EnergyHourly
 
 ref cultureInfo en-US
 

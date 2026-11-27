@@ -1,0 +1,50 @@
+table EnergyHourly
+	lineageTag: 492819b9-aa89-42e5-868e-57d8f91bf86a
+
+	measure 'Energy Hours Observed' = COUNTROWS(EnergyHourly)
+		formatString: #,0
+
+	measure 'Total Demand MWh' = SUM(EnergyHourly[demand_mwh])
+		formatString: #,0
+
+	measure 'Average Hourly Demand MWh' = AVERAGE(EnergyHourly[demand_mwh])
+		formatString: #,0.0
+
+	column respondent
+		dataType: string
+		sourceColumn: respondent
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+
+	column period_utc
+		dataType: string
+		sourceColumn: period_utc
+
+	column demand_mwh
+		dataType: double
+		sourceColumn: demand_mwh
+
+	column source_unit
+		dataType: string
+		sourceColumn: source_unit
+
+	column series_type
+		dataType: string
+		sourceColumn: series_type
+
+	partition EnergyHourly = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[energy_hourly],
+				    Empty = #table(type table [respondent=text,date=date,period_utc=text,demand_mwh=number,source_unit=text,series_type=text], {}),
+				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"respondent",type text},{"date",type date},{"period_utc",type text},{"demand_mwh",type number},{"source_unit",type text},{"series_type",type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
