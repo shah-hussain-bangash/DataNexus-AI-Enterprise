@@ -42,7 +42,7 @@ class HistoryTests(unittest.TestCase):
   self.assertEqual(entry2["assessed_at_utc"],entry["assessed_at_utc"])
  def test_bounded_authenticated_reader_contract(self):
   writer.register_snapshot(self.source,self.folder,now=NOW)
-  result=reader.read_alert_history(self.root)
+  result=reader.read_alert_history(self.root,now=NOW)
   self.assertEqual(result["count"],1)
   self.assertEqual(result["entries"][0]["alerts"][0]["code"],"STORED_OBSERVATION_OLD")
   self.assertFalse(result["production_approved"])
