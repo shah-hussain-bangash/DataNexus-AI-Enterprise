@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["DataNexus_Daily_Trips","Snapshot","QualityIssues","Platform","Sources","Pipeline","Services","ReleaseControls","Integrity","MTA"]
+annotation PBI_QueryOrder = ["DataNexus_Daily_Trips","Snapshot","QualityIssues","Platform","Sources","Pipeline","Services","ReleaseControls","Integrity","MTA","DomainCoverage","AviationDaily"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
@@ -23,6 +23,8 @@ ref table Services
 ref table ReleaseControls
 ref table Integrity
 ref table MTA
+ref table DomainCoverage
+ref table AviationDaily
 
 ref cultureInfo en-US
 

@@ -10,6 +10,7 @@ import json
 import os
 import sqlite3
 import tempfile
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -46,24 +47,51 @@ def collect(repo):
     av={'events':None,'aircraft':None,'positions':None,'latest':None}
     av_series=[];aviation_path=data/'aviation.sqlite3'
     if aviation_path.is_file():
-        with sqlite3.connect(aviation_path.as_uri()+'?mode=ro',uri=True,timeout=3) as db:
+        with closing(sqlite3.connect(aviation_path.resolve().as_uri()+'?mode=ro',uri=True,timeout=3)) as db:
             db.execute('PRAGMA query_only=ON')
             row=db.execute('SELECT COUNT(*),COUNT(DISTINCT icao24),SUM(latitude IS NOT NULL AND longitude IS NOT NULL),MAX(source_time) FROM events').fetchone()
             av=dict(zip(av,row))
             av_series=[{'date':day,'events':count} for day,count in db.execute('SELECT SUBSTR(source_time,1,10),COUNT(*) FROM events GROUP BY SUBSTR(source_time,1,10) ORDER BY 1')]
     mta=[];mta_path=data/'mta/mta_aggregate.sqlite3'
     if mta_path.is_file():
-        with sqlite3.connect(mta_path.as_uri()+'?mode=ro',uri=True,timeout=3) as db:
+        with closing(sqlite3.connect(mta_path.resolve().as_uri()+'?mode=ro',uri=True,timeout=3)) as db:
             db.execute('PRAGMA query_only=ON');db.row_factory=sqlite3.Row
             mta=[dict(r) for r in db.execute('SELECT provider_timestamp_utc,observed_at_utc,feed_id,entities,trip_updates,vehicle_positions,alerts FROM mta_aggregates ORDER BY provider_timestamp_utc')]
     latest=mta[-1] if mta else {}
     registry=load_module('datanexus_source_registry',repo/'apps/api/source_registry.py')
     gate=load_module('datanexus_release_gate',repo/'scripts/release_gate.py').readiness_report(repo/'production-evidence')
     sources=[
-        {'Feed':'NYC TLC Yellow Taxi','Domain':'Urban Mobility','Mode':'Historical batch','Records':snap['validated_source_rows'],'Unit':'source trips','Observed UTC':snap['generated_at_utc'],'Status':'Validated local history','Evidence':'Parquet + validation + reconciled Gold','Scope':'January 2024 source; 17 accepted trips outside month'},
+        {'Feed':'NYC TLC Yellow Taxi','Domain':'Urban Mobility','Mode':'Historical batch','Records':snap['validated_source_rows'],'Unit':'source trips','Observed UTC':snap['generated_at_utc'],'Status':'Validated local history','Evidence':'Parquet + validation + reconciled Gold','Scope':'January 2024 source; validated month boundaries retained'},
         {'Feed':'MTA GTFS-RT','Domain':'Urban Mobility','Mode':'Stored observations','Records':len(mta) if mta_path.is_file() else None,'Unit':'stored observations','Observed UTC':latest.get('provider_timestamp_utc'),'Status':'Stored observations' if mta else 'No stored observations','Evidence':'Read-only aggregate SQLite store','Scope':'One-shot observations; no continuous subscription verified'},
         {'Feed':'Aviation event sink','Domain':'Aviation','Mode':'Local sample','Records':av['events'],'Unit':'stored events','Observed UTC':av['latest'],'Status':'Local sample only' if av['events'] else 'No stored events','Evidence':'Read-only local SQLite event store','Scope':'Small historical sample; live OpenSky collection not established'},
     ]
+    domain_coverage=[]
+    for d in registry.SOURCE_CONTRACTS:
+        if d['id']=='mobility':
+            verified_modes=sum((x['Records'] or 0)>0 for x in sources if x['Domain']=='Urban Mobility')
+            domain_coverage.append({'Domain ID':'mobility','Domain':d['name'],'Region':d['region'],
+                'Historical Source':d['historical'],'Latest Source':d['latest'],
+                'Historical Connection':'Verified local NYC TLC monthly snapshot',
+                'Latest Connection':'Bounded stored MTA events' if mta else 'No stored MTA observations',
+                'Verified Local Feeds':verified_modes,'Continuous Live Verified':False,
+                'Data Available':verified_modes>0,'Connection State':'local_evidence_only' if verified_modes else 'not_connected',
+                'Licensing State':'review_required','Refresh Mode':'manual_import',
+                'Evidence Type':'Local files and SQLite; not provider SLA'})
+        else:
+            domain_coverage.append({'Domain ID':d['id'],'Domain':d['name'],'Region':d['region'],
+                'Historical Source':d['historical'],'Latest Source':d['latest'],
+                'Historical Connection':'Not connected','Latest Connection':'Not connected',
+                'Verified Local Feeds':0,'Continuous Live Verified':False,'Data Available':False,
+                'Connection State':'not_connected','Licensing State':'pending',
+                'Refresh Mode':'not_configured','Evidence Type':'Catalog design only'})
+    domain_coverage.append({'Domain ID':'aviation','Domain':'Aviation','Region':'Global',
+        'Historical Source':'Local aviation SQLite events','Latest Source':'No verified live source',
+        'Historical Connection':'Local event sample' if av['events'] else 'No local events',
+        'Latest Connection':'Not connected','Verified Local Feeds':1 if av['events'] else 0,
+        'Continuous Live Verified':False,'Data Available':bool(av['events']),
+        'Connection State':'local_sample_only' if av['events'] else 'not_connected',
+        'Licensing State':'review_required','Refresh Mode':'manual_import',
+        'Evidence Type':'SQLite sample; not validated external coverage'})
     for d in registry.SOURCE_CONTRACTS:
         if d['id']=='mobility':continue
         sources.append({'Feed':d['historical'],'Domain':d['name'],'Mode':d['update_model'],'Records':None,'Unit':'unverified','Observed UTC':None,'Status':'Planned / no verified data','Evidence':'Design contract only','Scope':d['latest']})
@@ -88,7 +116,7 @@ def collect(repo):
         ('Production release',gate['status'],f"{gate['passed']}/{gate['required']} controls have approved evidence metadata"),
     ]]
     controls=[{'Control':x['control'].replace('_',' ').title(),'Status':'Approved evidence' if x['verified'] else 'No approved evidence','Detail':x['reason'],'Approved':int(x['verified'])} for x in gate['controls']]
-    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
+    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)

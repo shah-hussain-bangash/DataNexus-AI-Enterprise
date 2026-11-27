@@ -36,3 +36,7 @@ Stored MTA observations and the aviation sample are historical evidence.
 Planned sources and unverified runtime services are labelled. Reporting integrity
 does not imply production approval. No live provider collection or cloud Power BI
 publication is configured by this folder.
+
+## Multi-domain connection status (pre-3.13)
+
+The semantic model has a new DomainCoverage table for seven source domains plus local Aviation; only verified local urban mobility and aviation artifacts populate measures. Remaining domains are marked Not connected, not filled with placeholder facts. AviationDaily imports existing local SQLite event counts. See `docs/13-powerbi/data-connection-first.md` for exact Windows steps and ingestion gaps.

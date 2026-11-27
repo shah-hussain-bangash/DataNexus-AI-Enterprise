@@ -1,0 +1,30 @@
+table AviationDaily
+	lineageTag: 6eef3a6a-8adf-4073-a42d-919dc31e0277
+
+	measure 'Local Aviation Events' = SUM(AviationDaily[events])
+		formatString: #,0
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+		summarizeBy: none
+
+	column events
+		dataType: int64
+		sourceColumn: events
+		summarizeBy: sum
+
+	partition AviationDaily = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[aviation_daily],
+				    Template = #table(type table [date = date, events = Int64.Type], {}),
+				    Rows = if List.Count(Raw) = 0 then Template else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"date",type date},{"events",Int64.Type}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,96 @@
+table DomainCoverage
+	lineageTag: 3cf0bb3a-14ef-4e69-b1c7-0d05dbbf34fb
+
+	measure 'Verified Local Domains' = CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Data Available] = TRUE())
+		formatString: 0
+
+	measure 'Not Connected Domains' = CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Data Available] = FALSE())
+		formatString: 0
+
+	measure 'Verified Continuous Sources' = CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Continuous Live Verified] = TRUE())
+		formatString: 0
+
+	column 'Domain ID'
+		dataType: string
+		sourceColumn: Domain ID
+		summarizeBy: none
+
+	column Domain
+		dataType: string
+		sourceColumn: Domain
+		summarizeBy: none
+
+	column Region
+		dataType: string
+		sourceColumn: Region
+		summarizeBy: none
+
+	column 'Historical Source'
+		dataType: string
+		sourceColumn: Historical Source
+		summarizeBy: none
+
+	column 'Latest Source'
+		dataType: string
+		sourceColumn: Latest Source
+		summarizeBy: none
+
+	column 'Historical Connection'
+		dataType: string
+		sourceColumn: Historical Connection
+		summarizeBy: none
+
+	column 'Latest Connection'
+		dataType: string
+		sourceColumn: Latest Connection
+		summarizeBy: none
+
+	column 'Verified Local Feeds'
+		dataType: int64
+		sourceColumn: Verified Local Feeds
+		summarizeBy: sum
+
+	column 'Continuous Live Verified'
+		dataType: boolean
+		sourceColumn: Continuous Live Verified
+		summarizeBy: none
+
+	column 'Data Available'
+		dataType: boolean
+		sourceColumn: Data Available
+		summarizeBy: none
+
+	column 'Connection State'
+		dataType: string
+		sourceColumn: Connection State
+		summarizeBy: none
+
+	column 'Licensing State'
+		dataType: string
+		sourceColumn: Licensing State
+		summarizeBy: none
+
+	column 'Refresh Mode'
+		dataType: string
+		sourceColumn: Refresh Mode
+		summarizeBy: none
+
+	column 'Evidence Type'
+		dataType: string
+		sourceColumn: Evidence Type
+		summarizeBy: none
+
+	partition DomainCoverage = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Rows = Inventory[domain_coverage],
+				    ExpectedIds = {"mobility","weather","seismic","coastal","river","property","energy","aviation"},
+				    Valid = if List.Count(Rows) = 8 and List.Sort(List.Transform(Rows, each Record.Field(_, "Domain ID"))) = List.Sort(ExpectedIds) then Rows else error "Domain coverage inventory incomplete",
+				    TableData = Table.FromRecords(Valid),
+				    Typed = Table.TransformColumnTypes(TableData, {{"Domain ID", type text},{"Domain",type text},{"Region",type text},{"Historical Source",type text},{"Latest Source",type text},{"Historical Connection",type text},{"Latest Connection",type text},{"Verified Local Feeds",Int64.Type},{"Continuous Live Verified", type logical},{"Data Available",type logical},{"Connection State",type text},{"Licensing State",type text},{"Refresh Mode",type text},{"Evidence Type",type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
