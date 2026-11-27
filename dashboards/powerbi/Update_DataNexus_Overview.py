@@ -74,6 +74,10 @@ def collect(repo):
     river_rows=river_data['records'] if river_data else []
     eia=load_module('datanexus_eia',repo/'scripts/ingest_eia_energy.py')
     energy_data=eia.load(data/'eia_energy')
+    eia_bulk=load_module('datanexus_eia_bulk',repo/'scripts/ingest_eia930_bulk.py')
+    bulk_data=eia_bulk.load(data/'eia_energy_bulk')
+    if bulk_data and energy_data:raise ValueError('EIA API and bulk snapshots both present; select one verified historical source')
+    energy_data=bulk_data or energy_data
     energy_rows=energy_data['records'] if energy_data else []
     registry=load_module('datanexus_source_registry',repo/'apps/api/source_registry.py')
     gate=load_module('datanexus_release_gate',repo/'scripts/release_gate.py').readiness_report(repo/'production-evidence')
@@ -129,11 +133,11 @@ def collect(repo):
                      'Evidence Type':'USGS daily mean discharge and SHA-256; cfs'})
     if energy_data:
         item=next(x for x in domain_coverage if x['Domain ID']=='energy')
-        item.update({'Historical Connection':'Verified local EIA US48 hourly demand',
+        item.update({'Historical Connection':'Verified local EIA-930 PJM hourly demand' if bulk_data else 'Verified local EIA US48 hourly demand',
                      'Verified Local Feeds':1,'Data Available':True,
                      'Connection State':'local_historical_snapshot',
                      'Refresh Mode':'manual_import',
-                     'Evidence Type':'EIA API v2 demand and SHA-256; key not exported'})
+                     'Evidence Type':'EIA-930 six-month BALANCE CSV and SHA-256' if bulk_data else 'EIA API v2 demand and SHA-256; key not exported'})
     domain_coverage.append({'Domain ID':'aviation','Domain':'Aviation','Region':'Global',
         'Historical Source':'Local aviation SQLite events','Latest Source':'No verified live source',
         'Historical Connection':'Local event sample' if av['events'] else 'No local events',
@@ -170,10 +174,10 @@ def collect(repo):
             'Status':'Validated local history','Evidence':'Modern USGS API + record digest',
             'Scope':river_data['metadata']['site']+' '+river_data['metadata']['start']+' to '+river_data['metadata']['end']})
     if energy_data:
-        sources.append({'Feed':'EIA US48 Hourly Electricity Demand','Domain':'Energy Grid',
+        sources.append({'Feed':'EIA-930 PJM Hourly Electricity Demand' if bulk_data else 'EIA US48 Hourly Electricity Demand','Domain':'Energy Grid',
             'Mode':'Historical hourly regional batch','Records':len(energy_rows),
             'Unit':'hourly demand records','Observed UTC':energy_data['metadata']['retrieved_at_utc'],
-            'Status':'Validated local history','Evidence':'EIA API v2 + SHA-256',
+            'Status':'Validated local history','Evidence':'EIA-930 six-month BALANCE CSV + SHA-256' if bulk_data else 'EIA API v2 + SHA-256',
             'Scope':energy_data['metadata']['respondent']+' '+energy_data['metadata']['start']+' to '+energy_data['metadata']['end']})
     feed_count=sum((x['Records'] or 0)>0 for x in sources)
     domains=len(set(x['Domain'] for x in sources))
