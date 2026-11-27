@@ -1,0 +1,55 @@
+table SeismicEvents
+	lineageTag: e9b52938-936d-48da-8c8a-4412d118a21c
+
+	measure 'Seismic Events' = COUNTROWS(SeismicEvents)
+		formatString: #,0
+
+	measure 'Mean Magnitude' = AVERAGE(SeismicEvents[magnitude])
+		formatString: 0.00
+
+	column event_id
+		dataType: string
+		sourceColumn: event_id
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+
+	column event_utc
+		dataType: string
+		sourceColumn: event_utc
+
+	column magnitude
+		dataType: double
+		sourceColumn: magnitude
+
+	column latitude
+		dataType: double
+		sourceColumn: latitude
+
+	column longitude
+		dataType: double
+		sourceColumn: longitude
+
+	column depth_km
+		dataType: double
+		sourceColumn: depth_km
+
+	column place
+		dataType: string
+		sourceColumn: place
+
+	partition SeismicEvents = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[seismic_events],
+				    Empty = #table(type table [event_id=text,date=date,event_utc=text,magnitude=number,latitude=number,longitude=number,depth_km=number,place=text], {}),
+				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"event_id",type text},{"date",type date},{"event_utc",type text},{"magnitude",type number},{"latitude",type number},{"longitude",type number},{"depth_km",type number},{"place",type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
