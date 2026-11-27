@@ -66,6 +66,9 @@ def collect(repo):
     noaa=load_module('datanexus_noaa_weather',repo/'scripts/ingest_noaa_weather.py')
     weather_data=noaa.load(data/'noaa_weather')
     weather=weather_data['records'] if weather_data else []
+    coops=load_module('datanexus_coops',repo/'scripts/ingest_noaa_coastal.py')
+    coastal_data=coops.load(data/'noaa_coastal')
+    coastal_rows=coastal_data['records'] if coastal_data else []
     registry=load_module('datanexus_source_registry',repo/'apps/api/source_registry.py')
     gate=load_module('datanexus_release_gate',repo/'scripts/release_gate.py').readiness_report(repo/'production-evidence')
     sources=[
@@ -104,6 +107,13 @@ def collect(repo):
                      'Connection State':'local_historical_snapshot',
                      'Refresh Mode':'manual_import',
                      'Evidence Type':'NOAA NCEI station observations with records SHA-256'})
+    if coastal_data:
+        item=next(x for x in domain_coverage if x['Domain ID']=='coastal')
+        item.update({'Historical Connection':'Verified local NOAA hourly heights',
+                     'Verified Local Feeds':1,'Data Available':True,
+                     'Connection State':'local_historical_snapshot',
+                     'Refresh Mode':'manual_import',
+                     'Evidence Type':'CO-OPS verified hourly heights + SHA-256; MLLW datum'})
     domain_coverage.append({'Domain ID':'aviation','Domain':'Aviation','Region':'Global',
         'Historical Source':'Local aviation SQLite events','Latest Source':'No verified live source',
         'Historical Connection':'Local event sample' if av['events'] else 'No local events',
@@ -127,6 +137,12 @@ def collect(repo):
             'Observed UTC':weather_data['metadata']['retrieved_at_utc'],
             'Status':'Validated local history','Evidence':'NOAA daily-summaries + SHA-256',
             'Scope':weather_data['metadata']['station']+' '+weather_data['metadata']['start']+' to '+weather_data['metadata']['end']})
+    if coastal_data:
+        sources.append({'Feed':'NOAA CO-OPS Verified Hourly Heights','Domain':'Coastal Water Levels',
+            'Mode':'Historical hourly station batch','Records':len(coastal_rows),
+            'Unit':'hourly observations','Observed UTC':coastal_data['metadata']['retrieved_at_utc'],
+            'Status':'Verified local history','Evidence':'CO-OPS station + MLLW + SHA-256',
+            'Scope':coastal_data['metadata']['station']+' '+coastal_data['metadata']['start']+' to '+coastal_data['metadata']['end']})
     feed_count=sum((x['Records'] or 0)>0 for x in sources)
     domains=len(set(x['Domain'] for x in sources))
     metrics={'captured_utc':now,'local_feeds':feed_count,'catalog_feeds':len(sources),'catalog_domains':domains,'approved_controls':gate['passed'],'required_controls':gate['required'],'release_status':gate['status'],'aviation_events':av['events'],'aviation_aircraft':av['aircraft'],'aviation_positions':av['positions'],'aviation_latest':av['latest'],'mta_observations':len(mta),'mta_latest_entities':latest.get('entities'),'mta_latest_trip_updates':latest.get('trip_updates'),'mta_latest_vehicle_positions':latest.get('vehicle_positions'),'mta_latest_alerts':latest.get('alerts'),'mta_latest_provider_utc':latest.get('provider_timestamp_utc'),'mta_latest_observed_utc':latest.get('observed_at_utc'),'continuous_feeds_verified':0,'integrity_checks_passed':sum(checks.values()),'integrity_checks_total':len(checks)}
@@ -148,7 +164,7 @@ def collect(repo):
         ('Production release',gate['status'],f"{gate['passed']}/{gate['required']} controls have approved evidence metadata"),
     ]]
     controls=[{'Control':x['control'].replace('_',' ').title(),'Status':'Approved evidence' if x['verified'] else 'No approved evidence','Detail':x['reason'],'Approved':int(x['verified'])} for x in gate['controls']]
-    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'seismic_events':seismic,'weather_daily':weather,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
+    return {'metrics':[metrics],'sources':sources,'pipeline':pipeline,'services':services,'controls':controls,'mta':mta,'aviation_daily':av_series,'domain_coverage':domain_coverage,'seismic_events':seismic,'weather_daily':weather,'coastal_hourly':coastal_rows,'checks':[{'Check':k,'Result':'Passed' if v else 'Failed'} for k,v in checks.items()]}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)

@@ -1,0 +1,50 @@
+table CoastalHourly
+	lineageTag: 10aa2128-d99f-4337-a233-84c81a332c78
+
+	measure 'Coastal Hourly Observations' = COUNTROWS(CoastalHourly)
+		formatString: #,0
+
+	measure 'Mean Water Height Metres' = AVERAGE(CoastalHourly[height_m])
+		formatString: 0.000
+
+	measure 'Maximum Water Height Metres' = MAX(CoastalHourly[height_m])
+		formatString: 0.000
+
+	column station
+		dataType: string
+		sourceColumn: station
+
+	column time_utc
+		dataType: string
+		sourceColumn: time_utc
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+
+	column height_m
+		dataType: double
+		sourceColumn: height_m
+
+	column datum
+		dataType: string
+		sourceColumn: datum
+
+	column product
+		dataType: string
+		sourceColumn: product
+
+	partition CoastalHourly = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[coastal_hourly],
+				    Empty = #table(type table [station=text,time_utc=text,date=date,height_m=number,datum=text,product=text], {}),
+				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"station",type text},{"time_utc",type text},{"date",type date},{"height_m",type number},{"datum",type text},{"product",type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
