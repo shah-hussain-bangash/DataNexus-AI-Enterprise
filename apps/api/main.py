@@ -14,6 +14,7 @@ from mta_observations import read_mta_observations
 from mta_monitor import latest_monitor
 from mta_alert_history import read_alert_history
 from mta_incident_review import review_status
+from mta_recovery_evidence import latest_recovery
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
 DB_PATH = os.getenv("DATANEXUS_SQLITE_PATH", "/opt/project/data/dev/aviation.sqlite3")
@@ -168,3 +169,12 @@ def mta_incident_reviews(user: dict = Depends(require_permission("quality:read")
         return {"tenant_id":tenant,**evidence}
     except (OSError, ValueError, TypeError, KeyError) as exc:
         raise HTTPException(status_code=503,detail="Local MTA incident review evidence unavailable") from exc
+
+@app.get("/api/v1/mta/recovery")
+def mta_recovery(user: dict = Depends(require_permission("quality:read"))):
+    tenant = require_tenant(user)
+    try:
+        evidence = latest_recovery(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev"))
+        return {"tenant_id":tenant,**evidence}
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
+        raise HTTPException(status_code=503,detail="Local MTA recovery evidence unavailable") from exc

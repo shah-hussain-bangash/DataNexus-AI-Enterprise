@@ -16,6 +16,8 @@ type MtaAlertEntry={snapshot_sha256:string;source_snapshot_checked_at_utc:string
 type MtaAlertHistory={tenant_id:string;state:string;count:number;entries:MtaAlertEntry[];production_approved:boolean;caveat:string};
 type IncidentReview={assessment_sha256:string;severity:string;alerts:string[];review_state:string;last_action_utc:string|null;assignee:string|null;resolution_self_reported:boolean};
 type IncidentReviewResponse={tenant_id:string;state:string;count:number;incidents:IncidentReview[];production_approved:boolean;caveat?:string};
+type MtaRecoveryReport={checked_at_utc:string;backup_file_name:string;backup_records:number;restored_records:number;sqlite_integrity:string;isolated_restore_verified:boolean;report_age_seconds:number;report_stale:boolean;backup_integrity_digest_matches:boolean;live_source_compared:boolean;kafka_recovery_tested:boolean;caveat:string};
+type MtaRecoveryResponse={tenant_id:string;state:string;report:MtaRecoveryReport|null;production_approved:boolean;caveat:string};
 type Readiness={tenant_id:string;release_status:string;approved_controls:number;required_controls:number;controls:{id:string;status:string}[]};
 type Load<T>={state:"loading"|"ready"|"unauthorized"|"error";data?:T;message?:string};
 export default function BackendEvidence(){
@@ -28,6 +30,7 @@ export default function BackendEvidence(){
  const [monitor,setMonitor]=useState<Load<MtaMonitor>>({state:"loading"});
  const [history,setHistory]=useState<Load<MtaAlertHistory>>({state:"loading"});
  const [incidents,setIncidents]=useState<Load<IncidentReviewResponse>>({state:"loading"});
+ const [recovery,setRecovery]=useState<Load<MtaRecoveryResponse>>({state:"loading"});
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
   let live=true;
@@ -42,7 +45,7 @@ export default function BackendEvidence(){
     if(live)setter({state:"error",message:"Cannot reach backend API"});
    }
   }
-  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});setHistory({state:"loading"});setIncidents({state:"loading"});
+  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});setHistory({state:"loading"});setIncidents({state:"loading"});setRecovery({state:"loading"});
   void load<Catalog>("catalog",setCatalog);
   void load<Readiness>("readiness",setReadiness);
   void load<Bronze>("nyc-tlc/bronze",setBronze);
@@ -52,6 +55,7 @@ export default function BackendEvidence(){
   void load<MtaMonitor>("mta/monitor",setMonitor);
   void load<MtaAlertHistory>("mta/alert-history",setHistory);
   void load<IncidentReviewResponse>("mta/incident-reviews",setIncidents);
+  void load<MtaRecoveryResponse>("mta/recovery",setRecovery);
   return()=>{live=false};
  },[refresh]);
  return <section className="evidence-root" aria-label="Authenticated enterprise backend readiness">
@@ -95,6 +99,21 @@ export default function BackendEvidence(){
         {incidents.data.incidents.map(e=><div key={e.assessment_sha256}><strong>{e.review_state.toUpperCase()} • {e.severity} • {e.assessment_sha256.slice(0,12)}…</strong><span>{e.alerts.join(", ")} • {e.assignee?"Assigned to "+e.assignee:"Not assigned"}{e.resolution_self_reported?" • operator-reported resolution (unverified)":""}</span></div>)}
       </div>}
       <small>{incidents.data.caveat||"Operator notes are not independently verified incident resolutions."}</small>
+    </>}
+  </article>
+  <article className="evidence-card" style={{marginTop:12}} aria-label="MTA backup recovery evidence">
+    <div className="evidence-title"><ShieldCheck size={21}/><h3>MTA Backup Recovery Evidence</h3></div>
+    {recovery.state==="loading"?<p role="status">Reading saved restore verification...</p>:recovery.state==="unauthorized"?<p>Sign in to view backup evidence.</p>:recovery.state==="error"?<p role="alert">Recovery evidence unavailable: {recovery.message}</p>:recovery.data&&<>
+      {recovery.data.report?<><p><strong>{recovery.data.report.report_stale?"Old verification":"Recent verification"}</strong> • {recovery.data.report.checked_at_utc} • {Math.round(recovery.data.report.report_age_seconds/3600)} hours old</p>
+      <div className="tlc-quality-kpis">
+        <div><small>Backup records</small><strong>{recovery.data.report.backup_records}</strong></div>
+        <div><small>Restored records</small><strong>{recovery.data.report.restored_records}</strong></div>
+        <div><small>SQLite integrity</small><strong>{recovery.data.report.sqlite_integrity}</strong></div>
+        <div><small>Backup digest matches</small><strong>{recovery.data.report.backup_integrity_digest_matches?"Yes":"No"}</strong></div>
+      </div>
+      <p>Evidence: {recovery.data.report.backup_file_name}. Isolated restore: {recovery.data.report.isolated_restore_verified?"verified at report time":"not verified"}. Kafka recovery test: not performed.</p>
+      </>:<p>No operator-saved recovery report yet. Validate an existing backup and save evidence locally.</p>}
+      <small>{recovery.data.caveat}</small>
     </>}
   </article>
   <article className="evidence-card" style={{marginTop:12}} aria-label="MTA Kafka consumed observations">
