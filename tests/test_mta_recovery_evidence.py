@@ -1,5 +1,6 @@
 """Phase 3.11 backup evidence tests, no broker and no production data."""
 import importlib.util,json,sys,tempfile,unittest
+from contextlib import closing
 from pathlib import Path
 from datetime import datetime,timezone,timedelta
 ROOT=Path(__file__).resolve().parents[1]
@@ -18,9 +19,10 @@ class RecoveryEvidenceTests(unittest.TestCase):
   self.backup=self.data/"recovery_backups"/"mta-recovery-20261127T070000000000Z.sqlite3"
   self.backup.parent.mkdir()
   import sqlite3
-  with sqlite3.connect(self.backup) as db:
+  with closing(sqlite3.connect(self.backup)) as db:
    db.execute("CREATE TABLE mta_aggregates (event_id TEXT,provider_timestamp_utc TEXT,observed_at_utc TEXT,feed_id TEXT,response_sha256 TEXT,entities INT,trip_updates INT,vehicle_positions INT,alerts INT)")
    db.execute("INSERT INTO mta_aggregates VALUES (?,?,?,?,?,?,?,?,?)",("a"*64,"2026-11-27T07:00:00+00:00","2026-11-27T07:00:01+00:00","ace","b"*64,8,4,4,0))
+   db.commit()
  def saved(self):
   result=r.verify_existing_backup(self.backup)
   r.save_report(result,self.data/"recovery_reports")
