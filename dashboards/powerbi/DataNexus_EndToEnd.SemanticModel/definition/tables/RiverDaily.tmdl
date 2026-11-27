@@ -1,0 +1,54 @@
+table RiverDaily
+	lineageTag: 26cc7b68-3d4f-4f47-b43b-30662dc8ead5
+
+	measure 'River Daily Observations' = COUNTROWS(RiverDaily)
+		formatString: #,0
+
+	measure 'Average Discharge CFS' = AVERAGE(RiverDaily[mean_discharge_cfs])
+		formatString: #,0.0
+
+	measure 'Maximum Discharge CFS' = MAX(RiverDaily[mean_discharge_cfs])
+		formatString: #,0.0
+
+	column station
+		dataType: string
+		sourceColumn: station
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+
+	column mean_discharge_cfs
+		dataType: double
+		sourceColumn: mean_discharge_cfs
+
+	column parameter_code
+		dataType: string
+		sourceColumn: parameter_code
+
+	column statistic_id
+		dataType: string
+		sourceColumn: statistic_id
+
+	column approval_status
+		dataType: string
+		sourceColumn: approval_status
+
+	column unit
+		dataType: string
+		sourceColumn: unit
+
+	partition RiverDaily = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[river_daily],
+				    Empty = #table(type table [station=text,date=date,mean_discharge_cfs=number,parameter_code=text,statistic_id=text,approval_status=text,unit=text], {}),
+				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"station",type text},{"date",type date},{"mean_discharge_cfs",type number},{"parameter_code",type text},{"statistic_id",type text},{"approval_status",type text},{"unit",type text}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
