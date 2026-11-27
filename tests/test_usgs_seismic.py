@@ -28,6 +28,9 @@ class UsgsConnectorTests(unittest.TestCase):
    with self.assertRaises(FileExistsError):u.fetch("2024-01-01","2024-02-01",folder=folder,opener=lambda req,timeout:Response(payload))
    snap=next(folder.glob("usgs-*.json"));snap.write_text("[]")
    with self.assertRaises(ValueError):u.load(folder)
+ def test_count_mismatch_is_diagnostic(self):
+  x=sample();x["metadata"]["count"]=10
+  with self.assertRaisesRegex(ValueError,"metadata_count=10, returned_features=1"):u.normalize(x,"2024-01-01","2024-02-01")
  def test_powerbi_contract(self):
   x=(ROOT/"dashboards/powerbi/Update_DataNexus_Overview.py").read_text()
   self.assertIn("seismic_events",x)

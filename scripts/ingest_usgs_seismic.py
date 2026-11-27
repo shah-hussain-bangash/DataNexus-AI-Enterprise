@@ -12,7 +12,11 @@ def query(start,end,mag=4.5):
 def normalize(payload,start,end):
  if payload.get("type")!="FeatureCollection" or not isinstance(payload.get("features"),list):raise ValueError("Invalid GeoJSON")
  rows=payload["features"]
- if not isinstance(payload.get("metadata"),dict) or payload["metadata"].get("count")!=len(rows) or not 0<len(rows)<5000:raise ValueError("Truncated, empty or inconsistent catalog response")
+ if not isinstance(payload.get("metadata"),dict):raise ValueError("Missing USGS metadata")
+ count=payload["metadata"].get("count")
+ if count!=len(rows):raise ValueError(f"USGS count mismatch: metadata_count={count!r}, returned_features={len(rows)}")
+ if not rows:raise ValueError("USGS returned zero events; try another historical window or smaller minimum magnitude")
+ if len(rows)>=5000:raise ValueError(f"USGS result reached query limit: {len(rows)}; split into smaller historical windows")
  begin=int(datetime.fromisoformat(start+"T00:00:00+00:00").timestamp()*1000)
  finish=int(datetime.fromisoformat(end+"T00:00:00+00:00").timestamp()*1000)
  events=[];seen=set()
@@ -70,7 +74,7 @@ def load(folder=OUT):
 if __name__=="__main__":
  p=argparse.ArgumentParser()
  p.add_argument("--start",default="2024-01-01")
- p.add_argument("--end",default="2024-02-01")
+ p.add_argument("--end",default="2024-01-08")
  p.add_argument("--min-magnitude",type=float,default=4.5)
  p.add_argument("--execute",action="store_true")
  a=p.parse_args()

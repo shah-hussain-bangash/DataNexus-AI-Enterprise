@@ -2,7 +2,7 @@
 
 Source: official USGS Earthquake Catalog GeoJSON API, https://earthquake.usgs.gov/fdsnws/event/1/.
 
-One bounded historical global query, default January 2024 magnitude 4.5+, maximum 5000 events. It rejects an empty, inconsistent or limit-sized result to avoid claiming an incomplete query is complete.
+One bounded historical global query, default 2024-01-01 through 2024-01-08 (one week) magnitude 4.5+, maximum 5000 events. It rejects an empty, inconsistent or limit-sized result to avoid claiming an incomplete query is complete.
 
 ## Windows PowerShell
 
@@ -18,3 +18,7 @@ python dashboards/powerbi/Update_DataNexus_Overview.py --repo "$root" --output (
 ```
 
 Open the existing PBIP in Power BI Desktop and refresh. The new SeismicEvents model remains empty and the seismic domain remains Not connected **until the real download and Power BI export complete**. This is neither continuous real-time streaming nor a complete multi-year big-data acquisition. Source data stays local and out of GitHub. Phase 3.13 remains paused.
+
+## If the provider still returns an error
+
+The collector now displays metadata count and actual returned feature count separately. USGS's endtime is documented as inclusive; a smaller requested window is used here to simplify troubleshooting. Do not treat an error as a connected data source, and do not delete any existing snapshots. Try `python scripts/ingest_usgs_seismic.py --start 2024-01-08 --end 2024-01-15 --execute` only if the default window fails; every request remains bounded and separately named.
