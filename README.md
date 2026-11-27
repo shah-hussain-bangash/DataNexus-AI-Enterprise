@@ -7,6 +7,86 @@
 ## Mission
 Build a secure, reproducible, cloud-native platform for real-time and batch data processing, governed AI investigation, multilingual analytics, and evidence-backed human decisions.
 
+<!-- powerbi-report-gallery:start -->
+## Power BI data analysis report
+
+The six-page [editable Power BI project](dashboards/powerbi) connects local
+DataNexus reporting evidence with source coverage, processing reconciliation,
+quality checks and historical trip analysis.
+
+**Screenshots captured: 27 November 2026.** The taxi analysis covers **January
+2024 pickup dates**; these are historical snapshots, not live telemetry.
+The taxi reporting snapshot was generated on 26 November 2026 at 10:19 UTC;
+the platform evidence snapshot was captured on 27 November 2026 at 06:14 UTC.
+
+| Analysis measure | Value shown |
+|---|---:|
+| Original NYC TLC source rows | 2,964,624 |
+| Accepted trips with January pickup dates | 2,926,979 |
+| January source trip totals | $80.34 million USD |
+| Weighted average trip total | $27.45 USD |
+| Source-wide quality acceptance | 98.73% |
+| Local reporting integrity checks | 9 / 9 passed |
+
+Trip totals are amounts in the source records, **not net business revenue**.
+Passing local reporting checks does not approve a production release: the
+dashboard separately shows **0 / 16 approved production controls**.
+
+### 1. Platform overview
+
+Three feeds have local records. The batch journey traces acquisition,
+validation, curation, aggregation and reporting, while unverified runtime
+components remain explicitly labelled.
+
+![Power BI platform overview showing local feeds, batch processing stages, source acceptance and production evidence](docs/assets/powerbi/01-platform-overview.png)
+
+### 2. Sources and telemetry
+
+The catalog distinguishes historical taxi data, six stored MTA observations,
+the two-event aviation sample and planned sources. The latest stored MTA
+response contains 112 entities; these are response entries, not unique vehicles
+or proof of a continuously running feed.
+
+![Power BI source catalog and stored telemetry observations with provider timestamps](docs/assets/powerbi/02-sources-telemetry.png)
+
+### 3. Pipeline assurance
+
+Nine reporting integrity checks pass, including source and derived-file checksums
+and row reconciliation. Stage outputs use different units, and production
+release evidence is assessed separately.
+
+![Power BI pipeline assurance showing nine passed integrity checks and the production control register](docs/assets/powerbi/03-pipeline-assurance.png)
+
+### 4. Taxi executive analysis
+
+January trip volume, source trip amounts, weighted trip value, distance,
+weekday patterns and weekday/weekend mix appear together in the executive view.
+
+![Power BI January 2024 taxi executive analysis showing 2.93 million trips and 80.34 million USD in source trip totals](docs/assets/powerbi/04-taxi-executive.png)
+
+### 5. Daily performance
+
+The selected month contains 31 pickup dates, an average of 94,419 accepted trips
+per day and a peak daily count of 109,088. Per-trip amount and distance averages
+are weighted by trip count.
+
+![Power BI daily performance showing daily averages, peak trips, trip value, distance and daily detail](docs/assets/powerbi/05-taxi-daily-performance.png)
+
+### 6. Data quality and reconciliation
+
+The original source reconciles to 2,926,996 accepted rows plus 37,628 quarantined
+rows. Seventeen accepted trips fall outside January and are excluded from the
+January analysis. Quality-reason counts overlap and must not be summed as
+distinct rejected rows.
+
+![Power BI data quality showing accepted and quarantined rows, quality reasons and reporting provenance](docs/assets/powerbi/06-taxi-quality.png)
+
+Open [the Power BI project and refresh instructions](dashboards/powerbi/README.md)
+for interactive filtering and local data setup. These README images are static;
+the dashboard save-to-GitHub watcher updates project definitions, not screenshot
+images. No raw datasets, imported model caches or credentials are included here.
+<!-- powerbi-report-gallery:end -->
+
 ## First complete vertical slice
 1. Collect permitted near-real-time aviation state vectors from OpenSky (respecting credits and licensing).
 2. Normalize and validate events; publish versioned events to Kafka.
