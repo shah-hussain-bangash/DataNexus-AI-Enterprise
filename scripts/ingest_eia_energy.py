@@ -3,7 +3,7 @@
 EIA_API_KEY environment variable required only for --execute. Never record
 or print API credentials, complete authenticated URLs, or provider raw data.
 """
-import argparse,hashlib,json,math,os,urllib.parse,urllib.request,urllib.error
+import argparse,hashlib,json,math,os,socket,ssl,urllib.parse,urllib.request,urllib.error
 from datetime import datetime,timezone,date
 from pathlib import Path
 
@@ -76,6 +76,27 @@ def safe_eia_http_error(exc):
     if type(status) is not int or not 100<=status<=599:status="UNKNOWN"
     return f"EIA request rejected (HTTP {status}; provider_code={code}; credential and URL hidden)"
 
+def safe_network_reason(exc):
+    """Classify network failures using exception classes, not messages/URLs."""
+    root=exc
+    if isinstance(exc,urllib.error.URLError):
+        root=getattr(exc,"reason",None)
+    if isinstance(root,ssl.SSLCertVerificationError):
+        return "TLS_CERTIFICATE_VERIFICATION"
+    if isinstance(root,ssl.SSLError):
+        return "TLS_HANDSHAKE"
+    if isinstance(root,socket.gaierror):
+        return "DNS_RESOLUTION"
+    if isinstance(root,(TimeoutError,socket.timeout)):
+        return "TIMEOUT"
+    if isinstance(root,ConnectionRefusedError):
+        return "CONNECTION_REFUSED"
+    if isinstance(root,ConnectionResetError):
+        return "CONNECTION_RESET"
+    if isinstance(root,PermissionError):
+        return "LOCAL_NETWORK_PERMISSION"
+    return "NETWORK_UNCLASSIFIED"
+
 def fetch(start,end,folder=ROOT,opener=None,key=None):
     parameters=query_params(start,end)
     credential=key if key is not None else os.getenv("EIA_API_KEY")
@@ -92,9 +113,10 @@ def fetch(start,end,folder=ROOT,opener=None,key=None):
             raw=response.read(3_000_001)
     except urllib.error.HTTPError as exc:
         raise RuntimeError(safe_eia_http_error(exc)) from None
-    except Exception:
-        # urllib errors can include a URL with the key: do not stringify them.
-        raise RuntimeError("EIA network or TLS failure (URL and credential hidden)") from None
+    except Exception as exc:
+        # Do not stringify exc: urllib errors may include authenticated URLs.
+        reason=safe_network_reason(exc)
+        raise RuntimeError(f"EIA request failed ({reason}; URL and credential hidden)") from None
     if len(raw)>3_000_000:raise ValueError("Oversized EIA response")
     rows=normalize(json.loads(raw),start,end)
     meta={"source":"EIA hourly electric grid demand","respondent":RESPONDENT,

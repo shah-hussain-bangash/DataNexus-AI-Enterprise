@@ -1,5 +1,5 @@
 """No-network EIA v2 hourly demand connector safety and Power BI contracts."""
-import io,json,sys,tempfile,unittest,urllib.error
+import io,json,sys,tempfile,unittest,urllib.error,ssl,socket
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
@@ -58,6 +58,18 @@ class EnergyTests(unittest.TestCase):
   text=eia.safe_eia_http_error(err)
   self.assertIn("provider_code=UNAVAILABLE",text)
   self.assertNotIn("SECRET",text)
+ def test_safe_network_reason_never_echoes_url_or_key(self):
+  address="https://api.eia.gov/?api_key=test-secret-key"
+  cases=[
+   (urllib.error.URLError(socket.gaierror(-2,address)),"DNS_RESOLUTION"),
+   (urllib.error.URLError(TimeoutError(address)),"TIMEOUT"),
+   (urllib.error.URLError(ConnectionRefusedError(address)),"CONNECTION_REFUSED"),
+   (urllib.error.URLError(ssl.SSLError(address)),"TLS_HANDSHAKE"),
+  ]
+  for exc,expected in cases:
+   result=eia.safe_network_reason(exc)
+   self.assertEqual(result,expected)
+   self.assertNotIn("test-secret-key",result)
  def test_powerbi_contract(self):
   exporter=(ROOT/"dashboards/powerbi/Update_DataNexus_Overview.py").read_text()
   model=(ROOT/"dashboards/powerbi/DataNexus_EndToEnd.SemanticModel/definition/model.tmdl").read_text()
