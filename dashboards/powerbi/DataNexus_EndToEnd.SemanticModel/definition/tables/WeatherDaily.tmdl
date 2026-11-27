@@ -1,0 +1,46 @@
+table WeatherDaily
+	lineageTag: 7e3693d5-b6a8-48cf-9db9-ce3550648c8e
+
+	measure 'Weather Days Observed' = COUNTROWS(WeatherDaily)
+		formatString: #,0
+
+	measure 'Average Maximum Celsius' = AVERAGE(WeatherDaily[tmax_c])
+		formatString: 0.0
+
+	measure 'Total Precipitation Millimetres' = SUM(WeatherDaily[precip_mm])
+		formatString: 0.0
+
+	column station
+		dataType: string
+		sourceColumn: station
+
+	column date
+		dataType: dateTime
+		formatString: dd MMM yyyy
+		sourceColumn: date
+
+	column tmax_c
+		dataType: double
+		sourceColumn: tmax_c
+
+	column tmin_c
+		dataType: double
+		sourceColumn: tmin_c
+
+	column precip_mm
+		dataType: double
+		sourceColumn: precip_mm
+
+	partition WeatherDaily = m
+		mode: import
+		source =
+				let
+				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
+				    Raw = Inventory[weather_daily],
+				    Empty = #table(type table [station=text,date=date,tmax_c=nullable number,tmin_c=nullable number,precip_mm=nullable number], {}),
+				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
+				    Typed = Table.TransformColumnTypes(Rows, {{"station",type text},{"date",type date},{"tmax_c",type number},{"tmin_c",type number},{"precip_mm",type number}})
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
