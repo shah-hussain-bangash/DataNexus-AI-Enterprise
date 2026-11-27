@@ -31,6 +31,13 @@ class UsgsConnectorTests(unittest.TestCase):
  def test_count_mismatch_is_diagnostic(self):
   x=sample();x["metadata"]["count"]=10
   with self.assertRaisesRegex(ValueError,"metadata_count=10, returned_features=1"):u.normalize(x,"2024-01-01","2024-02-01")
+ def test_optional_metadata_count_matches_real_usgs_response(self):
+  x=sample();del x["metadata"]["count"]
+  rows=u.normalize(x,"2024-01-01","2024-02-01")
+  self.assertEqual(len(rows),1)
+ def test_invalid_present_count_rejected(self):
+  x=sample();x["metadata"]["count"]="1"
+  with self.assertRaisesRegex(ValueError,"count mismatch"):u.normalize(x,"2024-01-01","2024-02-01")
  def test_powerbi_contract(self):
   x=(ROOT/"dashboards/powerbi/Update_DataNexus_Overview.py").read_text()
   self.assertIn("seismic_events",x)

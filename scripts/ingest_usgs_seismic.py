@@ -14,7 +14,10 @@ def normalize(payload,start,end):
  rows=payload["features"]
  if not isinstance(payload.get("metadata"),dict):raise ValueError("Missing USGS metadata")
  count=payload["metadata"].get("count")
- if count!=len(rows):raise ValueError(f"USGS count mismatch: metadata_count={count!r}, returned_features={len(rows)}")
+ # USGS GeoJSON metadata.count is optional; never require it to be present.
+ # When supplied, it must be a nonnegative integer and match features.
+ if count is not None and (type(count) is not int or count!=len(rows)):
+  raise ValueError(f"USGS count mismatch: metadata_count={count!r}, returned_features={len(rows)}")
  if not rows:raise ValueError("USGS returned zero events; try another historical window or smaller minimum magnitude")
  if len(rows)>=5000:raise ValueError(f"USGS result reached query limit: {len(rows)}; split into smaller historical windows")
  begin=int(datetime.fromisoformat(start+"T00:00:00+00:00").timestamp()*1000)
