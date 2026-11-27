@@ -72,6 +72,62 @@ def summarize(stream):
         for k,v in sorted(buckets.items())]
     return records,{"source_rows":scanned,"sales_rows":included,"excluded_non_sales":excluded}
 
+
+DLD_REQUIRED={"TRANSACTION_NUMBER","INSTANCE_DATE","GROUP_EN","PROCEDURE_EN","AREA_EN","PROP_TYPE_EN","TRANS_VALUE"}
+
+def summarize_actual_export(stream):
+    """DLD English CSV export: retain distinct PROCEDURE_EN categories separately."""
+    reader=csv.DictReader(stream)
+    names=reader.fieldnames or []
+    if len(names)!=len(set(names)) or not DLD_REQUIRED.issubset(set(names)):
+        raise ValueError("Unsupported official DLD export headers")
+    groups=defaultdict(lambda:[0,0.0])
+    identities={}
+    scanned=0
+    skipped_exact_duplicates=0
+    excluded=0
+    for row in reader:
+        scanned+=1
+        if scanned>MAX_ROWS:raise ValueError("CSV exceeds row bound")
+        if not isinstance(row,dict) or None in row or any(v is None for v in row.values()):
+            raise ValueError("Malformed official DLD transaction row")
+        identity=(row["TRANSACTION_NUMBER"] or "").strip()
+        if not identity or len(identity)>128:raise ValueError("Invalid transaction number")
+        # Exact duplicate records may be present in an official export. Different
+        # records sharing an identifier are ambiguous and must fail closed.
+        fingerprint=tuple(row.get(k) for k in names)
+        if identity in identities:
+            if fingerprint!=identities[identity]:
+                raise ValueError("Conflicting records share a DLD transaction number")
+            skipped_exact_duplicates+=1
+            continue
+        identities[identity]=fingerprint
+        if (row["GROUP_EN"] or "").strip().casefold()!="sales":
+            excluded+=1
+            continue
+        stamp=(row["INSTANCE_DATE"] or "").strip()
+        if len(stamp)<10:raise ValueError("Missing DLD timestamp")
+        day=date_value(stamp[:10])
+        procedure=(row["PROCEDURE_EN"] or "").strip()
+        area=(row["AREA_EN"] or "").strip()
+        prop=(row["PROP_TYPE_EN"] or "").strip()
+        for v in (procedure,area,prop):
+            if not v or len(v)>120 or any(ord(c)<32 for c in v):
+                raise ValueError("Untrusted DLD procedure or area")
+        amount=currency(row["TRANS_VALUE"])
+        key=(day,procedure,area,prop)
+        if key not in groups and len(groups)>=MAX_GROUPS:
+            raise ValueError("Too many DLD aggregate groups")
+        groups[key][0]+=1
+        groups[key][1]+=amount
+    if not groups:raise ValueError("No DLD sales group observations")
+    records=[{"date":k[0],"procedure":k[1],"area":k[2],"property_type":k[3],
+        "sales_count":v[0],"total_amount_aed":round(v[1],2),"currency":"AED",
+        "source_kind":"DLD CSV operator supplied"} for k,v in sorted(groups.items())]
+    counts={"source_rows":scanned,"sales_rows":sum(r["sales_count"] for r in records),
+            "excluded_non_sales":excluded,"skipped_exact_duplicates":skipped_exact_duplicates}
+    return records,counts
+
 def checksum(path):
     h=hashlib.sha256()
     with path.open("rb") as f:
@@ -88,12 +144,18 @@ def ingest(csv_path,folder=ROOT):
     snapshot=folder/(STEM+".json");manifest=folder/(STEM+".manifest.json")
     if snapshot.exists() or manifest.exists():raise FileExistsError("Existing DLD snapshot cannot be overwritten")
     source_hash=checksum(csv_path)
-    with csv_path.open("r",encoding="utf-8-sig",newline="") as f: rows,counts=summarize(f)
+    with csv_path.open("r",encoding="utf-8-sig",newline="") as f:
+        header=next(csv.reader(f))
+        f.seek(0)
+        rows,counts=(summarize_actual_export(f) if DLD_REQUIRED.issubset(set(header)) else summarize(f))
+    # Canonicalize legacy schema to preserve the new Power BI procedure dimension.
+    if rows and "procedure" not in rows[0]:
+        rows=[{"procedure":"Sale",**row} for row in rows]
     metadata={"source":"Dubai Land Department Transactions CSV","source_page":SOURCE,
         "operator_supplied":True,"source_provenance_verified":False,"license_approved":False,
         "contains_transaction_identifiers":False,"input_sha256":source_hash,
         "retrieved_at_utc":datetime.now(timezone.utc).isoformat(),
-        "count":len(rows),"records_sha256":digest(rows),"snapshot":snapshot.name,**counts,
+        "count":len(rows),"records_sha256":digest(rows),"snapshot":snapshot.name,"skipped_exact_duplicates":counts.get("skipped_exact_duplicates",0),**counts,
         "continuous":False,"production_approved":False}
     folder.mkdir(parents=True,exist_ok=True)
     try:
@@ -112,15 +174,15 @@ def load(folder=ROOT):
     meta=json.loads(manifest.read_text(encoding="utf-8"))
     keys={"source","source_page","operator_supplied","source_provenance_verified","license_approved",
         "contains_transaction_identifiers","input_sha256","retrieved_at_utc","count","records_sha256",
-        "snapshot","source_rows","sales_rows","excluded_non_sales","continuous","production_approved"}
+        "snapshot","source_rows","sales_rows","excluded_non_sales","skipped_exact_duplicates","continuous","production_approved"}
     if not isinstance(meta,dict) or set(meta)!=keys or meta["source"]!="Dubai Land Department Transactions CSV" or meta["source_page"]!=SOURCE or meta["operator_supplied"] is not True or meta["source_provenance_verified"] is not False or meta["license_approved"] is not False or meta["contains_transaction_identifiers"] is not False or meta["continuous"] is not False or meta["production_approved"] is not False or meta["snapshot"]!=snap.name or not re.fullmatch("[0-9a-f]{64}",str(meta["input_sha256"])):
         raise ValueError("Untrusted DLD provenance metadata")
     rows=json.loads(snap.read_text(encoding="utf-8"))
-    if not isinstance(rows,list) or type(meta["count"])is not int or len(rows)!=meta["count"] or digest(rows)!=meta["records_sha256"] or sum(x["sales_count"] for x in rows)!=meta["sales_rows"] or meta["source_rows"]!=meta["sales_rows"]+meta["excluded_non_sales"]:
+    if not isinstance(rows,list) or type(meta["count"])is not int or len(rows)!=meta["count"] or digest(rows)!=meta["records_sha256"] or sum(x["sales_count"] for x in rows)!=meta["sales_rows"] or meta["source_rows"]!=meta["sales_rows"]+meta["excluded_non_sales"]+meta["skipped_exact_duplicates"]:
         raise ValueError("DLD aggregate reconciliation failure")
-    fields={"date","area","property_type","sales_count","total_amount_aed","currency","source_kind"}
+    fields={"date","procedure","area","property_type","sales_count","total_amount_aed","currency","source_kind"}
     for x in rows:
-        if not isinstance(x,dict) or set(x)!=fields or x["currency"]!="AED" or x["source_kind"]!="DLD CSV operator supplied" or date_value(x["date"])!=x["date"] or not x["area"] or not x["property_type"] or type(x["sales_count"])is not int or x["sales_count"]<=0 or type(x["total_amount_aed"])not in (float,int) or not math.isfinite(x["total_amount_aed"]) or x["total_amount_aed"]<=0:
+        if not isinstance(x,dict) or set(x)!=fields or x["currency"]!="AED" or x["source_kind"]!="DLD CSV operator supplied" or date_value(x["date"])!=x["date"] or not x["procedure"] or not x["area"] or not x["property_type"] or type(x["sales_count"])is not int or x["sales_count"]<=0 or type(x["total_amount_aed"])not in (float,int) or not math.isfinite(x["total_amount_aed"]) or x["total_amount_aed"]<=0:
             raise ValueError("Invalid DLD stored aggregate")
     return {"metadata":meta,"records":rows}
 

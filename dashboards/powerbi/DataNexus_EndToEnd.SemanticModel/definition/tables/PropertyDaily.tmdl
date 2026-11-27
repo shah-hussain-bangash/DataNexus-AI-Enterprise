@@ -12,6 +12,10 @@ table PropertyDaily
 		formatString: dd MMM yyyy
 		sourceColumn: date
 
+	column procedure
+		dataType: string
+		sourceColumn: procedure
+
 	column area
 		dataType: string
 		sourceColumn: area
@@ -42,9 +46,9 @@ table PropertyDaily
 				let
 				    Inventory = Json.Document(File.Contents(PowerBIDataRoot & "\\DataNexus_Overview_Data.json")),
 				    Raw = Inventory[property_daily],
-				    Empty = #table(type table [date=date,area=text,property_type=text,sales_count=Int64.Type,total_amount_aed=number,currency=text,source_kind=text], {}),
+				    Empty = #table(type table [date=date,procedure=text,area=text,property_type=text,sales_count=Int64.Type,total_amount_aed=number,currency=text,source_kind=text], {}),
 				    Rows = if List.Count(Raw)=0 then Empty else Table.FromRecords(Raw),
-				    Typed = Table.TransformColumnTypes(Rows, {{"date",type date},{"area",type text},{"property_type",type text},{"sales_count",Int64.Type},{"total_amount_aed",type number},{"currency",type text},{"source_kind",type text}})
+				    Typed = Table.TransformColumnTypes(Rows, {{"date",type date},{"procedure",type text},{"area",type text},{"property_type",type text},{"sales_count",Int64.Type},{"total_amount_aed",type number},{"currency",type text},{"source_kind",type text}})
 				in
 				    Typed
 
