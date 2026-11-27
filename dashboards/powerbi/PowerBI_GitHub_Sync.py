@@ -121,7 +121,7 @@ def git(folder,*args):
 
 def status(state_dir,**values):
     state_dir.mkdir(parents=True,exist_ok=True)
-    d={'checked_utc':datetime.now(timezone.utc).isoformat(),**values}
+    d={'checked_utc':datetime.now(timezone.utc).isoformat(),'process_id':os.getpid(),**values}
     (state_dir/'sync-status.json').write_text(json.dumps(d,indent=2)+'\n',encoding='utf-8')
 
 def sync(files,state):
@@ -169,14 +169,27 @@ def main():
     p.add_argument('--prepare',type=Path)
     p.add_argument('--watch',action='store_true')
     p.add_argument('--once',action='store_true')
+    p.add_argument('--start',action='store_true')
+    p.add_argument('--stop',action='store_true')
     args=p.parse_args();source=args.source.resolve();state=args.state.resolve()
+    if args.stop:
+        state.mkdir(parents=True,exist_ok=True)
+        (state/'stop.request').touch()
+        print('Dashboard auto-sync will stop within a few seconds.');return
+    if args.start:
+        state.mkdir(parents=True,exist_ok=True)
+        if (state/'stop.request').exists():(state/'stop.request').unlink()
+        runtime=Path(sys.executable).with_name('pythonw.exe')
+        if not runtime.exists():runtime=Path(sys.executable)
+        subprocess.Popen([str(runtime),str(Path(__file__).resolve()),'--source',str(source),'--state',str(state),'--watch'],creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0),close_fds=True)
+        print('Dashboard-only auto-sync started.');return
     if args.prepare:
         files=prepare(source);args.prepare.mkdir(parents=True,exist_ok=True)
         for path,text in files.items():
             dest=args.prepare/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(text,encoding='utf-8')
         print('Prepared',len(files),'data-free project files');return
     if args.once:print(sync(prepare(source),state));return
-    if not args.watch:p.error('Choose --prepare, --once or --watch')
+    if not args.watch:p.error('Choose --prepare, --once, --start, --stop or --watch')
     # Process-level lock prevents duplicate startup/watch workers.
     import msvcrt
     state.mkdir(parents=True,exist_ok=True)
