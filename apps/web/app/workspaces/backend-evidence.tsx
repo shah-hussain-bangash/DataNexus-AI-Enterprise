@@ -12,6 +12,8 @@ type QualityEvidence={tenant_id:string;state:string;source_month:string;accepted
 type MtaObservation={event_id:string;feed_id:string;provider_timestamp_utc:string;observation_age_seconds:number;entities:number;trip_updates:number;vehicle_positions:number;alerts:number};
 type MtaResponse={tenant_id:string;state:string;count:number;observations:MtaObservation[];live_stream_connected:boolean;production_approved:boolean;caveat?:string};
 type MtaMonitor={tenant_id:string;state:string;checked_at_utc:string;consumer_lag_messages:number|null;offset_state:string;stored_aggregate_records:number;latest_stored_source_age_seconds:number;snapshot_age_seconds:number;snapshot_stale:boolean;caveat:string};
+type MtaAlertEntry={snapshot_sha256:string;source_snapshot_checked_at_utc:string;assessed_at_utc:string;status:string;alert_count:number;incident_lifecycle:string;alerts:{code:string;severity:string;reason:string;manual_action:string}[]};
+type MtaAlertHistory={tenant_id:string;state:string;count:number;entries:MtaAlertEntry[];production_approved:boolean;caveat:string};
 type Readiness={tenant_id:string;release_status:string;approved_controls:number;required_controls:number;controls:{id:string;status:string}[]};
 type Load<T>={state:"loading"|"ready"|"unauthorized"|"error";data?:T;message?:string};
 export default function BackendEvidence(){
@@ -22,6 +24,7 @@ export default function BackendEvidence(){
  const [quality,setQuality]=useState<Load<QualityEvidence>>({state:"loading"});
  const [mta,setMta]=useState<Load<MtaResponse>>({state:"loading"});
  const [monitor,setMonitor]=useState<Load<MtaMonitor>>({state:"loading"});
+ const [history,setHistory]=useState<Load<MtaAlertHistory>>({state:"loading"});
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
   let live=true;
@@ -36,7 +39,7 @@ export default function BackendEvidence(){
     if(live)setter({state:"error",message:"Cannot reach backend API"});
    }
   }
-  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});
+  setCatalog({state:"loading"});setReadiness({state:"loading"});setBronze({state:"loading"});setGold({state:"loading"});setQuality({state:"loading"});setMta({state:"loading"});setMonitor({state:"loading"});setHistory({state:"loading"});
   void load<Catalog>("catalog",setCatalog);
   void load<Readiness>("readiness",setReadiness);
   void load<Bronze>("nyc-tlc/bronze",setBronze);
@@ -44,6 +47,7 @@ export default function BackendEvidence(){
   void load<QualityEvidence>("nyc-tlc/quality",setQuality);
   void load<MtaResponse>("mta/observations",setMta);
   void load<MtaMonitor>("mta/monitor",setMonitor);
+  void load<MtaAlertHistory>("mta/alert-history",setHistory);
   return()=>{live=false};
  },[refresh]);
  return <section className="evidence-root" aria-label="Authenticated enterprise backend readiness">
@@ -67,6 +71,16 @@ export default function BackendEvidence(){
         <div><small>Offset condition</small><strong style={{fontSize:12}}>{monitor.data.offset_state.replaceAll("_"," ")}</strong></div>
       </div>
       <small>Saved evidence only; it does not poll Kafka or the MTA from the dashboard. {monitor.data.caveat}</small>
+    </>}
+  </article>
+  <article className="evidence-card" style={{marginTop:12}} aria-label="MTA operational alert history">
+    <div className="evidence-title"><AlertTriangle size={21}/><h3>MTA operational alert history</h3></div>
+    {history.state==="loading"?<p role="status">Loading locally recorded alert assessments...</p>:history.state==="unauthorized"?<p>Sign in to review the MTA alert register.</p>:history.state==="error"?<p role="alert">Alert history unavailable: {history.message}</p>:history.data&&<>
+      <p><strong>{history.data.count} recorded assessment(s)</strong> • local operator evidence • no automatic acknowledgement or resolution</p>
+      {history.data.entries.length===0?<p>No alert assessments recorded. Run the register command locally to create evidence.</p>:<div className="evidence-rows">
+        {history.data.entries.map(e=><div key={e.snapshot_sha256}><strong>{e.assessed_at_utc} • {e.status.replaceAll("_"," ")} • {e.incident_lifecycle}</strong><span>{e.alert_count} alert(s) • {e.alerts.map(a=>a.severity.toUpperCase()+": "+a.code).join(", ")||"No threshold breaches"}</span></div>)}
+      </div>}
+      <small>{history.data.caveat}</small>
     </>}
   </article>
   <article className="evidence-card" style={{marginTop:12}} aria-label="MTA Kafka consumed observations">
