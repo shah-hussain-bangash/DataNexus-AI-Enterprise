@@ -6,6 +6,22 @@ sources are pending review. **Earth & water** shows weather, earthquakes, coasta
 heights and river discharge. **Energy & property** shows EIA demand and Dubai
 sales aggregates. The original pages show taxi and stored MTA and aviation evidence.
 
+## Add All data to an existing local report
+
+If you have local report changes, such as a dedicated Dubai Property page,
+save and close Power BI Desktop. From a separate checkout of the updated
+branch, run the installer with the full path to your existing project:
+
+```powershell
+python scripts/install_powerbi_all_data_page.py "C:\path\to\dashboards\powerbi\DataNexus_EndToEnd.pbip"
+```
+
+The installer checks that the local model has the fields used by the charts,
+adds the page and selects it as the startup page. It keeps the existing pages,
+queries, parameters and data. Reopen your existing PBIP in Power BI Desktop
+to view it. When a chart is empty, stage the source snapshot and refresh as
+described below.
+
 ## Prepare all six additional sources
 
 With the validated taxi artifacts in place, run this from the checkout root.
