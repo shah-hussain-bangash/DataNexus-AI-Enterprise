@@ -1,7 +1,7 @@
 """Local signed-session API: not production SSO or RBAC."""
 import os
 import sqlite3
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 from auth import authenticate, require_user, TTL_SECONDS
 from authorization import require_permission, require_tenant
@@ -9,6 +9,7 @@ from data import read_events, summarize_events
 from source_registry import catalog as get_catalog, readiness as get_readiness
 from tlc_manifest import available_downloads
 from tlc_reporting import read_preview
+from metrics_assistant import answer_question
 from tlc_quality import quality_evidence
 from mta_observations import read_mta_observations
 from mta_monitor import latest_monitor
@@ -124,6 +125,27 @@ def nyc_tlc_reporting(user: dict = Depends(require_permission("catalog:read"))):
         return {"tenant_id": tenant, **snapshot}
     except (OSError, ValueError, TypeError, KeyError) as exc:
         raise HTTPException(status_code=503, detail="Local historical reporting evidence unavailable") from exc
+
+class MetricsQuestion(BaseModel, extra="forbid"):
+    question: str = Field(min_length=1, max_length=160)
+
+
+@app.post("/api/v1/nyc-tlc/metrics-assistant")
+def nyc_tlc_metrics_assistant(
+    payload: MetricsQuestion,
+    response: Response,
+    user: dict = Depends(require_permission("catalog:read")),
+):
+    require_tenant(user)
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return answer_question(
+            payload.question,
+            lambda: read_preview(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")),
+        )
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=503, detail="Local historical reporting evidence unavailable") from exc
+
 
 @app.get("/api/v1/nyc-tlc/quality")
 def nyc_tlc_quality(user: dict = Depends(require_permission("quality:read"))):
