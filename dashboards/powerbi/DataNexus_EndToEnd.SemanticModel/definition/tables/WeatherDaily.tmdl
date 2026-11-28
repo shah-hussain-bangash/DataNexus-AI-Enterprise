@@ -7,6 +7,9 @@ table WeatherDaily
 	measure 'Average Maximum Celsius' = AVERAGE(WeatherDaily[tmax_c])
 		formatString: 0.0
 
+	measure 'Average Minimum Celsius' = AVERAGE(WeatherDaily[tmin_c])
+		formatString: 0.0
+
 	measure 'Total Precipitation Millimetres' = SUM(WeatherDaily[precip_mm])
 		formatString: 0.0
 

@@ -1,13 +1,13 @@
 table DomainCoverage
 	lineageTag: 3cf0bb3a-14ef-4e69-b1c7-0d05dbbf34fb
 
-	measure 'Verified Local Domains' = CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Data Available] = TRUE())
+	measure 'Verified Local Domains' = COALESCE(CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Verified Local Feeds] > 0), 0)
 		formatString: 0
 
-	measure 'Not Connected Domains' = CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Data Available] = FALSE())
+	measure 'Not Connected Domains' = COALESCE(CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Data Available] = FALSE()), 0)
 		formatString: 0
 
-	measure 'Verified Continuous Sources' = CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Continuous Live Verified] = TRUE())
+	measure 'Verified Continuous Sources' = COALESCE(CALCULATE(COUNTROWS(DomainCoverage), DomainCoverage[Continuous Live Verified] = TRUE()), 0)
 		formatString: 0
 
 	column 'Domain ID'

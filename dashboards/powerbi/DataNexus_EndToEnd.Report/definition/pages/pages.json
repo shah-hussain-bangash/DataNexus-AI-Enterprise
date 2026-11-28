@@ -6,7 +6,10 @@
     "assurance",
     "overview",
     "performance",
-    "quality"
+    "quality",
+    "domainCoverage",
+    "environment",
+    "markets"
   ],
   "activePageName": "platform"
 }

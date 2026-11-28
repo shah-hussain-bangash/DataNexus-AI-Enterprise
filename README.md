@@ -10,9 +10,11 @@ Build a secure, reproducible, cloud-native platform for real-time and batch data
 <!-- powerbi-report-gallery:start -->
 ## Power BI data analysis report
 
-The six-page [editable Power BI project](dashboards/powerbi) connects local
-DataNexus reporting evidence with source coverage, processing reconciliation,
-quality checks and historical trip analysis.
+The [editable Power BI project](dashboards/powerbi) shows local DataNexus reporting
+evidence, processing reconciliation, quality checks and historical trip analysis.
+It also includes domain coverage, Earth and water observations, and energy and
+Dubai property pages. Use the [connection guide](docs/13-powerbi/data-connection-first.md)
+to load the available local snapshots. The gallery below shows the six original pages.
 
 **Screenshots captured: 27 November 2026.** The taxi analysis covers **January
 2024 pickup dates**; these are historical snapshots, not live telemetry.
