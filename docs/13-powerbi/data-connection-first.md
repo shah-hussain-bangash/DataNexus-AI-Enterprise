@@ -6,7 +6,29 @@ sources are pending review. **Earth & water** shows weather, earthquakes, coasta
 heights and river discharge. **Energy & property** shows EIA demand and Dubai
 sales aggregates. The original pages show taxi and stored MTA and aviation evidence.
 
-## Load available snapshots
+## Prepare all six additional sources
+
+With the validated taxi artifacts in place, run this from the checkout root.
+Replace both CSV paths with the local files on your PC.
+
+```powershell
+python scripts/connect_powerbi_sources.py --eia-csv "PATH_TO_EIA930_BALANCE_2024_Jan_Jun.csv" --dld-csv "PATH_TO_DLD_TRANSACTIONS.csv"
+```
+
+The command reuses existing validated snapshots and fetches missing NOAA and USGS
+data for the default historical windows. An existing energy snapshot takes
+precedence. Without an EIA CSV, it can use an `EIA_API_KEY` already set in the
+local environment. If the Dubai CSV is unavailable, omit `--dld-csv` and
+prepare the other sources. Use `--local-only` to check already staged snapshots
+and rebuild the export without downloading or importing data.
+
+The command prints each source's row count and the two Power BI folder
+parameters. It exits with code 2 when it exports successfully but one or more
+sources have no validated rows, and code 1 if the report export fails.
+Follow [the Desktop refresh steps](#regenerate-the-import-and-refresh) to load
+the generated JSON into Power BI and verify the report.
+
+## Source details and manual setup
 
 Run the commands from the root of the DataNexus checkout. Reuse existing
 validated snapshots. The collectors use bounded historical windows and can reject
@@ -52,9 +74,9 @@ python scripts/transform_nyc_tlc.py
 python scripts/export_nyc_tlc_reporting.py
 ```
 
-For the Power BI import, run this from
-the checkout root and use your existing Power BI data folder if it differs from
-the example:
+If you used the preparation command above, use its printed paths and skip the
+manual exporter command below. Otherwise run this from the checkout root and use
+your existing Power BI data folder if it differs from the example:
 
 ```powershell
 $repoRoot = (Resolve-Path .).Path
