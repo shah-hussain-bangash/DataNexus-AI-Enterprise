@@ -5,7 +5,11 @@ January 2024 NYC Yellow Taxi report. It computes answers from the same verified
 Gold snapshot as the historical reporting endpoint. This slice uses deterministic
 answers and prepares the evidence contract for later model integration.
 
-Send a signed portal bearer token and a JSON body to
+In the signed-in portal, open **Workspaces → Taxi Metrics Assistant**.
+The screen offers four example questions and displays the date range, source
+fields and snapshot fingerprint with each answer.
+
+For API clients, send a signed portal bearer token and a JSON body to
 `POST /api/v1/nyc-tlc/metrics-assistant`. Example request body:
 
 ```json

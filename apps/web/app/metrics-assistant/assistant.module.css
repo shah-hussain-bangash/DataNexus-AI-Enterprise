@@ -1,0 +1,48 @@
+.page {
+  background: #edf3f7;
+  color: #172a41;
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+}
+.frame { max-width: 1100px; margin: 0 auto; }
+.nav { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; font-size: 14px; color: #53677d; }
+.nav a, .answer a, .result a { color: #075f59; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+.hero { border-radius: 16px; background: #12283f; color: #ffffff; padding: 34px 38px; margin-bottom: 20px; }
+.hero h1 { margin: 6px 0 8px; font-size: clamp(31px, 5vw, 48px); letter-spacing: -.035em; line-height: 1.08; }
+.hero p { margin: 0; color: #d2e2ee; line-height: 1.55; }
+.hero .source { color: #91e3d5; font-weight: 650; font-size: 13px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.card { min-width: 0; border: 1px solid #d4e1eb; border-radius: 14px; padding: 24px; background: #fff; }
+.card h2 { font-size: 21px; margin: 0 0 16px; letter-spacing: -.02em; }
+.card p { line-height: 1.55; }
+.form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px 10px; }
+.form label { grid-column: 1 / -1; color: #40566d; font-size: 14px; font-weight: 650; }
+.form input { min-width: 0; border: 1px solid #8da6ba; border-radius: 8px; padding: 11px 12px; height: 46px; color: #172a41; background: #fff; font: inherit; }
+.primary { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 0 15px; border: 0; border-radius: 8px; font: inherit; font-weight: 650; color: #fff; background: #067268; cursor: pointer; text-decoration: none; }
+.primary:disabled { background: #576c7e; cursor: default; }
+.result { overflow-wrap: anywhere; }
+.result > p { margin: 16px 0 0; }
+.answer { margin-top: 20px; border-top: 1px solid #dee6ee; padding-top: 18px; }
+.answer h3, .citation h4 { margin: 0 0 8px; }
+.answer p { margin: 0 0 16px; }
+.citation { border: 1px solid #d8e4ec; border-radius: 9px; padding: 15px; background: #f2f7fa; font-size: 14px; }
+.citation dl { display: grid; gap: 8px; margin: 14px 0; }
+.citation dt { font-weight: 650; color: #40566d; }
+.citation dd { margin: 2px 0 0; }
+.citation summary { cursor: pointer; }
+.citation code { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+.examples { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.examples button { width: 100%; min-height: 43px; border: 1px solid #c5d6e3; border-radius: 8px; background: #f5f9fb; color: #172a41; font: inherit; text-align: left; padding: 9px 11px; cursor: pointer; }
+.examples button:hover:not(:disabled) { background: #e6f2f0; border-color: #6d9b97; }
+.examples button:disabled { cursor: default; }
+.page :focus-visible { outline: 3px solid #0a8096; outline-offset: 3px; }
+
+@media (max-width: 700px) {
+  .page { padding: 22px 14px 44px; }
+  .hero { padding: 26px 20px; }
+  .grid { grid-template-columns: 1fr; }
+  .card { padding: 18px; }
+}
+@media (max-width: 400px) {
+  .form { grid-template-columns: 1fr; }
+}
