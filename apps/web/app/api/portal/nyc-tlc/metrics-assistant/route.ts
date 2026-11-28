@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedJson } from "../../bounded-json";
 
 export const dynamic = "force-dynamic";
 
@@ -6,36 +7,12 @@ const reply = (body: unknown, status: number) =>
   NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
 async function readQuestion(request: NextRequest): Promise<string | null> {
-  const body = request.body?.getReader();
-  if (!body) return null;
-
-  const decoder = new TextDecoder("utf-8", { fatal: true });
-  let bytes = 0;
-  let text = "";
-  try {
-    while (true) {
-      const chunk = await body.read();
-      if (chunk.done) break;
-      bytes += chunk.value.byteLength;
-      if (bytes > 1024) {
-        await body.cancel();
-        return null;
-      }
-      text += decoder.decode(chunk.value, { stream: true });
-    }
-    const json: unknown = JSON.parse(text + decoder.decode());
-    if (!json || typeof json !== "object" || Array.isArray(json) || Object.keys(json).length !== 1) {
-      return null;
-    }
-    const { question } = json as { question?: unknown };
-    return typeof question === "string" && question.trim() && question.length <= 160
-      ? question.trim()
-      : null;
-  } catch {
-    return null;
-  } finally {
-    body.releaseLock();
-  }
+  const json = await readBoundedJson(request);
+  if (!json || typeof json !== "object" || Array.isArray(json) || Object.keys(json).length !== 1) return null;
+  const { question } = json as { question?: unknown };
+  return typeof question === "string" && question.trim() && question.length <= 160
+    ? question.trim()
+    : null;
 }
 
 export async function POST(request: NextRequest) {
