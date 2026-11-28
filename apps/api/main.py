@@ -1,7 +1,8 @@
 """Local signed-session API: not production SSO or RBAC."""
 import os
 import sqlite3
-from fastapi import Depends, FastAPI, HTTPException, Query, Response
+from typing import Literal
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Response
 from pydantic import BaseModel, Field
 from auth import authenticate, require_user, TTL_SECONDS
 from authorization import require_permission, require_tenant
@@ -17,6 +18,7 @@ from mta_monitor import latest_monitor
 from mta_alert_history import read_alert_history
 from mta_incident_review import review_status
 from mta_investigation import investigate
+import mta_human_review as human_review
 from mta_recovery_evidence import latest_recovery
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
@@ -222,3 +224,77 @@ def mta_investigation(
     if brief is None:
         raise HTTPException(status_code=404, detail="Actionable assessment not found in the local evidence window")
     return {"tenant_id": tenant, **brief}
+
+class ReviewProposal(BaseModel, extra="forbid"):
+    assessment_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
+class ReviewDecision(BaseModel, extra="forbid"):
+    decision: Literal["approve", "reject"]
+    evidence_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
+@app.post("/api/v1/mta/review-requests")
+def submit_mta_review(
+    payload: ReviewProposal,
+    response: Response,
+    user: dict = Depends(require_permission("mta_review:request")),
+):
+    tenant = require_tenant(user)
+    data_root = os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")
+    try:
+        brief = investigate(data_root, payload.assessment_sha256)
+        request = human_review.submit(data_root, tenant, user["username"], brief) if brief is not None else None
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, sqlite3.Error) as exc:
+        raise HTTPException(status_code=503, detail="Local MTA review evidence unavailable") from exc
+    if request is None:
+        raise HTTPException(status_code=404, detail="Actionable assessment not found")
+    response.headers["Cache-Control"] = "no-store"
+    return request
+
+
+@app.get("/api/v1/mta/review-requests/{request_id}")
+def get_mta_review(
+    response: Response,
+    request_id: str = Path(pattern=r"^[a-f0-9]{32}$"),
+    user: dict = Depends(require_permission("mta_review:read")),
+):
+    tenant = require_tenant(user)
+    data_root = os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")
+    try:
+        request = human_review.get(data_root, tenant, request_id)
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
+        raise HTTPException(status_code=503, detail="Local MTA review evidence unavailable") from exc
+    if request is None:
+        raise HTTPException(status_code=404, detail="Review request not found")
+    response.headers["Cache-Control"] = "no-store"
+    return request
+
+
+@app.post("/api/v1/mta/review-requests/{request_id}/decision")
+def decide_mta_review(
+    payload: ReviewDecision,
+    response: Response,
+    request_id: str = Path(pattern=r"^[a-f0-9]{32}$"),
+    user: dict = Depends(require_permission("mta_review:decide")),
+):
+    tenant = require_tenant(user)
+    data_root = os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")
+    try:
+        request = human_review.get(data_root, tenant, request_id)
+        if request is None:
+            raise HTTPException(status_code=404, detail="Review request not found")
+        current = investigate(data_root, request["assessment_sha256"]) if request["status"] == "pending" else None
+        decided = human_review.decide(
+            data_root, tenant, user["username"], request_id, payload.decision, payload.evidence_sha256, current,
+        )
+    except human_review.SelfReview as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except human_review.ReviewConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, sqlite3.Error) as exc:
+        raise HTTPException(status_code=503, detail="Local MTA review evidence unavailable") from exc
+    if decided is None:
+        raise HTTPException(status_code=404, detail="Review request not found")
+    response.headers["Cache-Control"] = "no-store"
+    return decided
