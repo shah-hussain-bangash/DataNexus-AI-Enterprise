@@ -2,8 +2,8 @@
 
 The local portal API accepts a fixed set of questions about the existing
 January 2024 NYC Yellow Taxi report. It computes answers from the same verified
-Gold snapshot as the historical reporting endpoint. This slice uses deterministic
-answers and prepares the evidence contract for later model integration.
+Gold snapshot as the historical reporting endpoint. The API calculates answers and citations deterministically.
+An opt-in local model can map additional English wording to supported questions.
 
 In the signed-in portal, open **Workspaces → Taxi Metrics Assistant**.
 The screen offers four example questions and displays the date range, source
@@ -32,3 +32,18 @@ Run the API acceptance tests with the portal dependencies installed:
 python -m pip install -r apps/api/requirements.txt httpx
 python -m unittest discover -s tests -p test_metrics_assistant.py -v
 ```
+
+## Optional local model routing
+
+When the portal API runs directly on the same Windows host as Ollama, set
+`DATANEXUS_METRICS_MODEL=qwen3:8b` in the API process environment. Start with the
+locally installed model available at the loopback Ollama endpoint. The default
+configuration and the standard Docker portal use the exact-question path.
+
+The router sends eligible question text to local Ollama. It sends no snapshots,
+credentials, or database records. It accepts a single validated intent from the
+four supported metrics and gives the model no database access or tools. The API
+then reads the reporting snapshot, calculates the number and attaches citations.
+Responses identify exact-question or model routing in the `routing` field.
+Out-of-scope questions, model timeouts and invalid model responses fall back to
+the unsupported response. [Ollama structured responses](https://docs.ollama.com/capabilities/structured-outputs)
