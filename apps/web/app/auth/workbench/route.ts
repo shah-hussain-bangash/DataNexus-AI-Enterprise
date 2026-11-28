@@ -28,9 +28,15 @@ export async function GET(request: NextRequest) {
   if (!username || !password) return result;
   try {
     const current = request.cookies.get(cookieName)?.value;
-    if (current && await validPortalSession(current)) return result;
+    if (current && await validPortalSession(current)) {
+      result.headers.set("Location", "/workspaces");
+      return result;
+    }
     const login = await portalLogin(username, password);
-    if (login.token) writePortalSession(result, login.token, login.maxAge);
+    if (login.token) {
+      writePortalSession(result, login.token, login.maxAge);
+      result.headers.set("Location", "/workspaces");
+    }
   } catch {
     // The portal continues through its normal sign-in flow when local auth is unavailable.
   }
