@@ -10,6 +10,7 @@ from source_registry import catalog as get_catalog, readiness as get_readiness
 from tlc_manifest import available_downloads
 from tlc_reporting import read_preview
 from metrics_assistant import answer_question
+from metrics_model_router import route_question
 from tlc_quality import quality_evidence
 from mta_observations import read_mta_observations
 from mta_monitor import latest_monitor
@@ -142,6 +143,7 @@ def nyc_tlc_metrics_assistant(
         return answer_question(
             payload.question,
             lambda: read_preview(os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev")),
+            route=route_question,
         )
     except (OSError, ValueError, TypeError, KeyError) as exc:
         raise HTTPException(status_code=503, detail="Local historical reporting evidence unavailable") from exc

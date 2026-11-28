@@ -35,9 +35,14 @@ QUESTION_KEYS = {
 }
 
 
-def answer_question(question, load_snapshot):
-    key = QUESTION_KEYS.get(normalize(question))
-    if key is None:
+def answer_question(question, load_snapshot, route=None):
+    normalized = normalize(question)
+    key = QUESTION_KEYS.get(normalized)
+    routing = "exact_question"
+    if key is None and route is not None:
+        key = route(normalized)
+        routing = "local_model"
+    if key not in QUESTIONS:
         return {
             "status": "unsupported",
             "answer": "This assistant can answer a limited set of questions about the local January 2024 NYC taxi snapshot.",
@@ -87,6 +92,7 @@ def answer_question(question, load_snapshot):
 
     return {
         "status": "answered",
+        "routing": routing,
         "answer": answer,
         "value": value,
         "citations": [{
