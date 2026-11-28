@@ -16,6 +16,7 @@ from mta_observations import read_mta_observations
 from mta_monitor import latest_monitor
 from mta_alert_history import read_alert_history
 from mta_incident_review import review_status
+from mta_investigation import investigate
 from mta_recovery_evidence import latest_recovery
 from login_throttle import throttle, WINDOW_SECONDS
 from audit_store import enabled as audit_enabled, initialize as initialize_audit, record_event, recent_events
@@ -202,3 +203,22 @@ def mta_recovery(user: dict = Depends(require_permission("quality:read"))):
         return {"tenant_id":tenant,**evidence}
     except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
         raise HTTPException(status_code=503,detail="Local MTA recovery evidence unavailable") from exc
+
+@app.get("/api/v1/mta/investigation")
+def mta_investigation(
+    response: Response,
+    assessment_sha256: str | None = Query(default=None, pattern=r"^[a-f0-9]{64}$"),
+    user: dict = Depends(require_permission("quality:read")),
+):
+    tenant = require_tenant(user)
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        brief = investigate(
+            os.getenv("DATANEXUS_DATA_ROOT", "/opt/project/data/dev"),
+            assessment_sha256,
+        )
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, sqlite3.Error) as exc:
+        raise HTTPException(status_code=503, detail="Local MTA investigation evidence unavailable") from exc
+    if brief is None:
+        raise HTTPException(status_code=404, detail="Actionable assessment not found in the local evidence window")
+    return {"tenant_id": tenant, **brief}
