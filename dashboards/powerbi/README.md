@@ -1,7 +1,8 @@
 # DataNexus Power BI overview
 
-Six-page editable Power BI project: platform overview, sources and telemetry,
-pipeline assurance, taxi executive view, daily performance, and taxi quality.
+The editable Power BI project opens on **All data**, a single page with nine
+charts across eight domains. The other pages provide source coverage, pipeline
+assurance and detailed views by domain.
 
 Open `DataNexus_EndToEnd.pbip` in Power BI Desktop. Set the `DataNexusRoot` and
 `PowerBIDataRoot` Power Query parameters to your local folders, then refresh.
@@ -37,6 +38,10 @@ Planned sources and unverified runtime services are labelled. Reporting integrit
 does not imply production approval. No live provider collection or cloud Power BI
 publication is configured by this folder.
 
-## Multi-domain connection status (pre-3.13)
+## Connect and view all domains
 
-The semantic model has a new DomainCoverage table for seven source domains plus local Aviation; only verified local urban mobility and aviation artifacts populate measures. Remaining domains are marked Not connected, not filled with placeholder facts. AviationDaily imports existing local SQLite event counts. See `docs/13-powerbi/data-connection-first.md` for exact Windows steps and ingestion gaps.
+Follow the [local connection and refresh guide](../../docs/13-powerbi/data-connection-first.md)
+to load the available historical snapshots into Power BI Desktop. The coverage
+page shows which local snapshots are available and the status of each proposed
+latest feed. Dubai property is shown for internal review when an operator supplies
+a CSV. Missing snapshots leave their report visuals empty.
