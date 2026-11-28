@@ -1,8 +1,8 @@
 # DataNexus Power BI overview
 
-Nine-page editable Power BI project. The first six pages cover platform
-operations, stored telemetry and taxi analysis. The last three show domain
-coverage, Earth and water observations, and energy and Dubai property data.
+The editable Power BI project opens on **All data**, a single page with nine
+charts across eight domains. The other pages provide source coverage, pipeline
+assurance and detailed views by domain.
 
 Open `DataNexus_EndToEnd.pbip` in Power BI Desktop. Set the `DataNexusRoot` and
 `PowerBIDataRoot` Power Query parameters to your local folders, then refresh.

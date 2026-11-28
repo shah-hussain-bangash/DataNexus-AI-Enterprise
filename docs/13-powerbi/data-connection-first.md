@@ -88,8 +88,9 @@ python dashboards/powerbi/Update_DataNexus_Overview.py --repo "$repoRoot" --outp
 Once the exporter succeeds, open `dashboards/powerbi/DataNexus_EndToEnd.pbip`
 in Power BI Desktop. Under **Transform data → Edit parameters**, set
 `DataNexusRoot` and `PowerBIDataRoot` to the folders above. Apply the changes
-and refresh. Check **Domain coverage** first, then compare the observation dates
-on the charts with the dates in the source guide for each loaded snapshot.
+and refresh. The report opens on **All data**, which shows nine charts across
+eight domains. Check **Domain coverage** for empty charts, then compare the
+observation dates with the source guide for each loaded snapshot.
 
 When a local snapshot is missing, the associated chart remains empty. Dubai
 property can show aggregates while provenance and licensing are still under
