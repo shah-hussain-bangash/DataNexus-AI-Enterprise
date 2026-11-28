@@ -37,10 +37,10 @@ class DLDContracts(unittest.TestCase):
    (out/(dld.STEM+".json")).write_text("[]")
    with self.assertRaises(ValueError):dld.load(out)
  def test_real_dld_export_schema_and_exact_duplicate(self):
-  header="TRANSACTION_NUMBER,INSTANCE_DATE,GROUP_EN,PROCEDURE_EN,AREA_EN,PROP_TYPE_EN,TRANS_VALUE,TOTAL_BUYER\\n"
-  rows=("X1,2026-11-01 12:00:00,Sales,Sale,Business Bay,Unit,1250000,1\\n"
-        "X1,2026-11-01 12:00:00,Sales,Sale,Business Bay,Unit,1250000,1\\n"
-        "X2,2026-11-01 13:00:00,Sales,Sell - Pre registration,Business Bay,Unit,2000000,2\\n")
+  header="TRANSACTION_NUMBER,INSTANCE_DATE,GROUP_EN,PROCEDURE_EN,AREA_EN,PROP_TYPE_EN,TRANS_VALUE,TOTAL_BUYER\n"
+  rows=("X1,2026-11-01 12:00:00,Sales,Sale,Business Bay,Unit,1250000,1\n"
+        "X1,2026-11-01 12:00:00,Sales,Sale,Business Bay,Unit,1250000,1\n"
+        "X2,2026-11-01 13:00:00,Sales,Sell - Pre registration,Business Bay,Unit,2000000,2\n")
   data,counts=dld.summarize_actual_export(io.StringIO(header+rows))
   self.assertEqual(counts["source_rows"],3)
   self.assertEqual(counts["skipped_exact_duplicates"],1)
@@ -48,14 +48,14 @@ class DLDContracts(unittest.TestCase):
   self.assertEqual({x["procedure"] for x in data},{"Sale","Sell - Pre registration"})
   self.assertNotIn("X1",json.dumps(data))
  def test_real_dld_conflicting_duplicate_rejected(self):
-  csv=("TRANSACTION_NUMBER,INSTANCE_DATE,GROUP_EN,PROCEDURE_EN,AREA_EN,PROP_TYPE_EN,TRANS_VALUE\\n"
-    "X1,2026-11-01 12:00:00,Sales,Sale,A,Unit,10000\\n"
-    "X1,2026-11-01 12:00:00,Sales,Sale,A,Unit,90000\\n")
+  csv=("TRANSACTION_NUMBER,INSTANCE_DATE,GROUP_EN,PROCEDURE_EN,AREA_EN,PROP_TYPE_EN,TRANS_VALUE\n"
+    "X1,2026-11-01 12:00:00,Sales,Sale,A,Unit,10000\n"
+    "X1,2026-11-01 12:00:00,Sales,Sale,A,Unit,90000\n")
   with self.assertRaises(ValueError):dld.summarize_actual_export(io.StringIO(csv))
  def test_real_dld_manifest_roundtrip(self):
-  csv=("TRANSACTION_NUMBER,INSTANCE_DATE,GROUP_EN,PROCEDURE_EN,AREA_EN,PROP_TYPE_EN,TRANS_VALUE\\n"
-    "X1,2026-11-01 12:00:00,Sales,Sale,A,Unit,10000\\n"
-    "X2,2026-11-01 13:00:00,Sales,Sell - Pre registration,B,Land,90000\\n")
+  csv=("TRANSACTION_NUMBER,INSTANCE_DATE,GROUP_EN,PROCEDURE_EN,AREA_EN,PROP_TYPE_EN,TRANS_VALUE\n"
+    "X1,2026-11-01 12:00:00,Sales,Sale,A,Unit,10000\n"
+    "X2,2026-11-01 13:00:00,Sales,Sell - Pre registration,B,Land,90000\n")
   with tempfile.TemporaryDirectory() as tmp:
    p=Path(tmp);source=p/"transactions.csv";source.write_text(csv)
    result=dld.ingest(source,p/"out")

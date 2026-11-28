@@ -64,7 +64,7 @@ def load(folder=OUT):
  p=files[0]
  if p.is_symlink() or p.stat().st_size>10000:raise ValueError("Unsafe manifest")
  report=json.loads(p.read_text(encoding="utf-8"))
- if report.get("source")!="USGS ComCat" or report.get("production_approved") is not False or report.get("continuous") is not False:raise ValueError("Unverified report")
+ if not isinstance(report,dict) or report.get("source")!="USGS ComCat" or report.get("production_approved") is not False or report.get("continuous") is not False:raise ValueError("Unverified report")
  name=report["snapshot"]
  if not isinstance(name,str) or not name.startswith("usgs-") or not name.endswith(".json") or "/" in name or "\\" in name:raise ValueError("Invalid snapshot path")
  snap=folder/name

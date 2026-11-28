@@ -6,6 +6,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from urllib.error import HTTPError
 from datanexus.events import normalize_states
 from datanexus.opensky import OpenSkyClient, OpenSkyRateLimited
 from datanexus.storage import LocalEventStore
@@ -42,15 +43,44 @@ def fixture_events(path):
         return normalize_states(json.load(stream), collected_at="2026-01-01T00:00:00Z")
 
 
+def collect_live_once(args, client, bbox):
+    """Make one authenticated poll and publish only a fresh, nonempty result."""
+    if not client.client_id.strip() or not client.client_secret.strip():
+        raise SystemExit("Set OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET before a live one-shot run.")
+    try:
+        response = client.states(bbox)
+        provider_time = response.get("time") if isinstance(response, dict) else None
+        if type(provider_time) is not int:
+            raise SystemExit("OpenSky returned an invalid snapshot timestamp.")
+        age_seconds = time.time() - provider_time
+        if not -30 <= age_seconds <= 120:
+            raise SystemExit("OpenSky snapshot time is outside the live acceptance window.")
+        events = normalize_states(response)
+    except OpenSkyRateLimited as exc:
+        raise SystemExit(f"OpenSky rate limited the request. Retry after {exc.retry_seconds} seconds.") from None
+    except HTTPError as exc:
+        raise SystemExit(f"OpenSky returned HTTP {exc.code}. Nothing was published.") from None
+    except (OSError, ValueError, TypeError, KeyError, OverflowError) as exc:
+        raise SystemExit(f"OpenSky one-shot collection failed ({type(exc).__name__}). Nothing was published.") from None
+
+    if not events:
+        raise SystemExit("OpenSky returned no valid aircraft events for this area.")
+    produce(events, args.bootstrap, args.topic)
+    LOG.info("Live snapshot published: provider_unix_time=%d, events=%d", provider_time, len(events))
+
+
 def collect(args):
     if args.mode == "fixture":
         events = fixture_events(args.fixture)
         produce(events, args.bootstrap, args.topic)
         return
-    if args.interval < 60:
+    if not args.once and args.interval < 60:
         raise SystemExit("Live collection interval must be >=60 seconds to protect API credits")
     bbox = (args.lamin, args.lomin, args.lamax, args.lomax)
     client = OpenSkyClient()
+    if args.once:
+        collect_live_once(args, client, bbox)
+        return
     while True:
         try:
             events = normalize_states(client.states(bbox))
@@ -101,6 +131,7 @@ def main(argv=None):
     p = sub.add_parser("collect")
     p.add_argument("--mode", choices=["fixture", "live"], default=os.getenv("SOURCE_MODE", "fixture"))
     p.add_argument("--fixture", default=str(FIXTURE))
+    p.add_argument("--once", action="store_true", help="In live mode, poll once and exit.")
     p.add_argument("--bootstrap", default=os.getenv("KAFKA_BOOTSTRAP", "localhost:19092"))
     p.add_argument("--topic", default=os.getenv("KAFKA_TOPIC", "aviation.states.v1"))
     p.add_argument("--interval", type=int, default=int(os.getenv("POLL_INTERVAL_SECONDS", "120")))

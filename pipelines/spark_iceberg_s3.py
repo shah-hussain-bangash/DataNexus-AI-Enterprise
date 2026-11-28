@@ -20,6 +20,7 @@ def run(bronze_path, expected_unique=None):
     spark = (
         SparkSession.builder.appName("DataNexus-Phase2F-Iceberg-S3")
         .config("spark.sql.shuffle.partitions", "2")
+        .config("spark.sql.session.timeZone", "UTC")
         .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
         .config("spark.sql.catalog.remote", "org.apache.iceberg.spark.SparkCatalog")
         .config("spark.sql.catalog.remote.type", "rest")
