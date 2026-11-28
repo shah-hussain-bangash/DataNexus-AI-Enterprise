@@ -1,6 +1,6 @@
 """P0.3 local API authorization policy.
 
-This is a fail-closed authorization layer for a single local administrator,
+This is a fail-closed authorization layer for local portal identities,
 NOT enterprise multi-user RBAC, MFA, SSO, or an organization identity provider.
 Permissions are checked on the API, never inferred from frontend navigation.
 """
@@ -10,8 +10,9 @@ from auth import require_user
 PERMISSIONS = {
     "admin": frozenset({
         "aviation:read", "quality:read", "overview:read", "audit:read",
-        "catalog:read", "readiness:read"
+        "catalog:read", "readiness:read", "mta_review:request", "mta_review:read"
     }),
+    "mta_reviewer": frozenset({"mta_review:read", "mta_review:decide"}),
 }
 
 def permitted(user, permission):

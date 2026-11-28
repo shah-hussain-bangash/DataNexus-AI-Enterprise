@@ -1,4 +1,4 @@
-"""Local-only single-user auth for DataNexus Phase 3A.2.
+"""Local signed sessions for a portal administrator and optional MTA reviewer.
 
 Uses PBKDF2-HMAC SHA256 credential verification and short-lived HMAC-signed
 tokens. NOT enterprise SSO, multi-user RBAC, MFA or identity federation.
@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import time
 
 from fastapi import Header, HTTPException
@@ -85,13 +86,28 @@ def verify_token(token, secret, now=None):
         return None
 
 
+def reviewer_settings(admin_username):
+    username = os.getenv("DATANEXUS_MTA_REVIEWER_USERNAME", "")
+    digest = os.getenv("DATANEXUS_MTA_REVIEWER_PASSWORD_HASH", "")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", username) or not digest or username.casefold() == admin_username.casefold():
+        return None
+    return username, digest
+
+
 def authenticate(username, password):
     secret, configured_username, digest, tenant = settings()
     # Verify password even if username differs to reduce timing differences.
     valid_password = verify_password(password, digest)
-    if not hmac.compare_digest(username.encode("utf-8"), configured_username.encode("utf-8")) or not valid_password:
-        return None
-    return issue_token(configured_username, "admin", tenant, secret)
+    if hmac.compare_digest(username.encode("utf-8"), configured_username.encode("utf-8")) and valid_password:
+        return issue_token(configured_username, "admin", tenant, secret)
+
+    reviewer = reviewer_settings(configured_username)
+    if reviewer:
+        reviewer_username, reviewer_digest = reviewer
+        if (hmac.compare_digest(username.encode("utf-8"), reviewer_username.encode("utf-8"))
+                and not valid_password and verify_password(password, reviewer_digest)):
+            return issue_token(reviewer_username, "mta_reviewer", tenant, secret)
+    return None
 
 
 def require_user(authorization: str | None = Header(default=None)):
@@ -99,7 +115,12 @@ def require_user(authorization: str | None = Header(default=None)):
         raise HTTPException(status_code=401, detail="Authentication required")
     secret, configured_username, _, tenant = settings()
     payload = verify_token(authorization[7:], secret)
-    if (payload is None or payload["sub"] != configured_username or payload["tenant_id"] != tenant
-            or payload["role"] != "admin"):
+    if payload is None or payload["tenant_id"] != tenant:
         raise HTTPException(status_code=401, detail="Session expired or invalid")
-    return {"username": configured_username, "role": "admin", "tenant_id": tenant}
+    role = payload["role"]
+    if role == "mta_reviewer":
+        reviewer = reviewer_settings(configured_username)
+        configured_username = reviewer[0] if reviewer else None
+    if role not in ("admin", "mta_reviewer") or payload["sub"] != configured_username:
+        raise HTTPException(status_code=401, detail="Session expired or invalid")
+    return {"username": configured_username, "role": role, "tenant_id": tenant}
