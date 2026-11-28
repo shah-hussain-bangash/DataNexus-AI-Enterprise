@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { portalLogin, writePortalSession } from "../../../../lib/portal-session";
 
-const cookieName = "datanexus_session";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
@@ -16,18 +16,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
   }
   try {
-    const response = await fetch(new URL("/auth/login", process.env.API_INTERNAL_URL || "http://api:8000"), {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }), cache: "no-store", signal: AbortSignal.timeout(7000),
-    });
-    if (!response.ok) return NextResponse.json({ error: "Invalid credentials or authentication unavailable" }, { status: response.status === 401 ? 401 : 503 });
-    const data = await response.json() as { access_token?: string; expires_in?: number };
-    if (!data.access_token) return NextResponse.json({ error: "Invalid authentication response" }, { status: 503 });
+    const login = await portalLogin(username, password);
+    if (!login.token) return NextResponse.json({ error: "Invalid credentials or authentication unavailable" }, { status: login.status });
     const result = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
-    result.cookies.set(cookieName, data.access_token, {
-      httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production",
-      maxAge: Math.min(data.expires_in || 28800, 28800), path: "/",
-    });
+    writePortalSession(result, login.token, login.maxAge);
     return result;
   } catch {
     return NextResponse.json({ error: "Authentication service unavailable" }, { status: 503 });
