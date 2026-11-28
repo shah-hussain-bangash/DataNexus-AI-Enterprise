@@ -17,7 +17,12 @@ def transform(bronze):
     missing = required - set(bronze.columns)
     if missing:
         raise ValueError(f"Missing Bronze columns: {sorted(missing)}")
-    parsed = bronze.withColumn(
+    parsed = (
+        bronze.withColumn("source_event_time", F.get_json_object("raw_json", "$.source_event_time"))
+        .withColumn("event_date", F.to_date(F.try_to_timestamp("source_event_time")))
+        .withColumn("_latitude", F.expr("try_cast(get_json_object(raw_json, '$.payload.latitude') AS DOUBLE)"))
+        .withColumn("_longitude", F.expr("try_cast(get_json_object(raw_json, '$.payload.longitude') AS DOUBLE)"))
+    ).withColumn(
         "reason",
         F.when(F.col("raw_json").isNull(), F.lit("missing_raw_json"))
          .when(F.col("quality_reason").isNotNull(), F.col("quality_reason"))
@@ -27,6 +32,11 @@ def transform(bronze):
                F.lit("missing_tenant_id"))
          .when(F.col("icao24").isNull() | (F.length(F.trim("icao24")) == 0),
                F.lit("missing_icao24"))
+         .when(F.col("event_date").isNull(), F.lit("missing_or_invalid_event_time"))
+         .when(F.col("_latitude").isNull() | ~F.col("_latitude").between(-90.0, 90.0),
+               F.lit("missing_or_invalid_latitude"))
+         .when(F.col("_longitude").isNull() | ~F.col("_longitude").between(-180.0, 180.0),
+               F.lit("missing_or_invalid_longitude"))
     )
     bad = parsed.filter(F.col("reason").isNotNull()).select(
         "topic", "kafka_partition", "kafka_offset", "event_id", "reason", "raw_json"
@@ -39,12 +49,10 @@ def transform(bronze):
         valid.withColumn("row_number", F.row_number().over(window))
         .filter(F.col("row_number") == 1)
         .select("event_id", "tenant_id", "icao24",
-                F.get_json_object("raw_json", "$.source_event_time").alias("source_event_time"),
-                F.to_date(F.get_json_object("raw_json", "$.source_event_time")).alias("event_date"),
+                "source_event_time", "event_date",
                 F.get_json_object("raw_json", "$.source").alias("source"),
                 "topic", "kafka_partition", "kafka_offset", "raw_json")
     )
-    silver = silver.filter(F.col("event_date").isNotNull())
     gold = silver.groupBy("tenant_id", "event_date").agg(
         F.count("*").alias("event_count"),
         F.countDistinct("icao24").alias("distinct_aircraft"),
@@ -56,6 +64,7 @@ def run(bronze_path, warehouse_uri, expected_unique=None):
     spark = (
         SparkSession.builder.appName("DataNexus-Phase2E-Iceberg")
         .config("spark.sql.shuffle.partitions", "2")
+        .config("spark.sql.session.timeZone", "UTC")
         .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
         .config("spark.sql.catalog.local", "org.apache.iceberg.spark.SparkCatalog")
         .config("spark.sql.catalog.local.type", "hadoop")

@@ -43,7 +43,9 @@ checkpointed stream and the latter holds persistent Iceberg table metadata.
 
 - Local Hadoop catalog: not remote S3/MinIO.
 - Bounded replay and table-snapshot refresh: not a continuous Iceberg sink.
-- Quality checks reuse the Phase 2D Bronze `quality_reason` field.
+- Silver quarantines rows with Bronze quality reasons, missing or invalid event
+  timestamps, and missing or out-of-range coordinates. It also checks coordinates
+  when reprocessing Bronze written by earlier versions.
 - Rows with a non-null `reason` go into a quarantine table; missing or invalid
   dates currently cause rows to be excluded, not quarantined. Improve coverage.
 - There is no security authorization, catalog HA, multi-table atomicity, compaction,

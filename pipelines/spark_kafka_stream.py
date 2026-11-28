@@ -16,6 +16,7 @@ EVENT_SCHEMA = T.StructType([
     T.StructField("tenant_id", T.StringType()),
     T.StructField("source", T.StringType()),
     T.StructField("source_event_time", T.StringType()),
+    T.StructField("_corrupt_record", T.StringType()),
     T.StructField("payload", T.StructType([
         T.StructField("icao24", T.StringType()),
         T.StructField("latitude", T.DoubleType()),
@@ -35,6 +36,42 @@ def validate_args(args):
         raise ValueError("Use absolute container paths for Spark output and checkpoint")
 
 
+def prepare_bronze(source):
+    """Preserve Kafka lineage and label invalid records before writing Bronze."""
+    return (
+        source.select(
+            F.col("topic"),
+            F.col("partition").alias("kafka_partition"),
+            F.col("offset").alias("kafka_offset"),
+            F.col("timestamp").alias("kafka_timestamp"),
+            F.col("key").cast("string").alias("kafka_key"),
+            F.col("value").cast("string").alias("raw_json"),
+        )
+        .withColumn("event", F.from_json(
+            "raw_json", EVENT_SCHEMA, {"columnNameOfCorruptRecord": "_corrupt_record"}
+        ))
+        .withColumn("event_id", F.col("event.event_id"))
+        .withColumn("tenant_id", F.col("event.tenant_id"))
+        .withColumn("icao24", F.col("event.payload.icao24"))
+        .withColumn(
+            "quality_reason",
+            F.when(F.col("raw_json").isNull(), F.lit("missing_raw_json"))
+             .when(F.col("event").isNull() | F.col("event._corrupt_record").isNotNull(),
+                   F.lit("malformed_json"))
+             .when(F.col("event_id").isNull(), F.lit("missing_event_id"))
+             .when(F.col("tenant_id").isNull(), F.lit("missing_tenant_id"))
+             .when(F.col("icao24").isNull(), F.lit("missing_icao24"))
+             .when(F.col("event.payload.latitude").isNull()
+                   | ~F.col("event.payload.latitude").between(-90.0, 90.0),
+                   F.lit("missing_or_invalid_latitude"))
+             .when(F.col("event.payload.longitude").isNull()
+                   | ~F.col("event.payload.longitude").between(-180.0, 180.0),
+                   F.lit("missing_or_invalid_longitude"))
+        )
+        .drop("event")
+    )
+
+
 def run(args):
     validate_args(args)
     spark = (SparkSession.builder
@@ -51,32 +88,7 @@ def run(args):
             .option("failOnDataLoss", "true")
             .load()
         )
-        records = (
-            source.select(
-                F.col("topic"),
-                F.col("partition").alias("kafka_partition"),
-                F.col("offset").alias("kafka_offset"),
-                F.col("timestamp").alias("kafka_timestamp"),
-                F.col("key").cast("string").alias("kafka_key"),
-                F.col("value").cast("string").alias("raw_json"),
-            )
-            .withColumn("event", F.from_json("raw_json", EVENT_SCHEMA))
-            .withColumn("event_id", F.col("event.event_id"))
-            .withColumn("tenant_id", F.col("event.tenant_id"))
-            .withColumn("icao24", F.col("event.payload.icao24"))
-            .withColumn(
-                "quality_reason",
-                F.when(F.col("event").isNull(), F.lit("malformed_json"))
-                 .when(F.col("event_id").isNull(), F.lit("missing_event_id"))
-                 .when(F.col("tenant_id").isNull(), F.lit("missing_tenant_id"))
-                 .when(F.col("icao24").isNull(), F.lit("missing_icao24"))
-                 .when(~F.col("event.payload.latitude").between(-90.0, 90.0),
-                       F.lit("missing_or_invalid_latitude"))
-                 .when(~F.col("event.payload.longitude").between(-180.0, 180.0),
-                       F.lit("missing_or_invalid_longitude"))
-            )
-            .drop("event")
-        )
+        records = prepare_bronze(source)
         query = (
             records.writeStream
             .format("parquet")

@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - "pipelines/spark_medallion.py"
+      - "pipelines/spark_kafka_stream.py"
+      - "pipelines/spark_iceberg_medallion.py"
+      - "pipelines/spark_iceberg_s3.py"
+      - "tests/test_spark_aviation_quality.py"
       - "tests/fixtures/spark-silver.jsonl"
       - ".github/workflows/phase2c-spark-smoke.yml"
   pull_request:
@@ -25,6 +29,8 @@ jobs:
           spark-submit --master 'local[2]' pipelines/spark_medallion.py \
             --input tests/fixtures/spark-silver.jsonl \
             --output /tmp/datanexus-spark-smoke --expected-events 2
+      - name: Verify aviation replay deduplication and quarantine
+        run: python -m unittest discover -s tests -p test_spark_aviation_quality.py -v
       - name: Inspect output paths
         run: |
           test -f /tmp/datanexus-spark-smoke/gold_parquet/_SUCCESS
