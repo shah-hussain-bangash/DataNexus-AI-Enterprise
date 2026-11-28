@@ -26,8 +26,12 @@ class UsgsConnectorTests(unittest.TestCase):
    result=u.fetch("2024-01-01","2024-02-01",folder=folder,opener=lambda req,timeout:Response(payload))
    self.assertEqual(len(u.load(folder)["records"]),1)
    with self.assertRaises(FileExistsError):u.fetch("2024-01-01","2024-02-01",folder=folder,opener=lambda req,timeout:Response(payload))
-   snap=next(folder.glob("usgs-*.json"));snap.write_text("[]")
-   with self.assertRaises(ValueError):u.load(folder)
+   manifest=Path(result["manifest"])
+   snap=folder/json.loads(manifest.read_text())["snapshot"]
+   snap.write_text("[]")
+   with self.assertRaisesRegex(ValueError,"Changed records"):u.load(folder)
+   manifest.write_text("[]")
+   with self.assertRaisesRegex(ValueError,"Unverified report"):u.load(folder)
  def test_count_mismatch_is_diagnostic(self):
   x=sample();x["metadata"]["count"]=10
   with self.assertRaisesRegex(ValueError,"metadata_count=10, returned_features=1"):u.normalize(x,"2024-01-01","2024-02-01")
