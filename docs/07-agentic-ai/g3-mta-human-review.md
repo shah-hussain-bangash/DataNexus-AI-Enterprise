@@ -13,7 +13,14 @@ password different from the administrator's. Keep both identities and hashes
 in the existing local secret configuration. Without a distinct reviewer, the
 decision route remains inaccessible.
 
-## Submit and decide
+## Use the portal
+
+Open **Workspaces → MTA Incident Review**. The administrator can load the latest
+brief and submit it for review. Share the request ID with the reviewer, who
+signs in separately and opens it from the same screen. The reviewer sees the
+frozen brief, evidence digest and expiry before choosing Approve or Reject.
+
+## Submit and decide through the API
 
 Use the existing `/auth/login` endpoint for each identity separately and supply
 the resulting bearer token to the appropriate request.
